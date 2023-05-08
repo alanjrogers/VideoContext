@@ -76,7 +76,7 @@
     "jest-cli": "^29.5.0",
     "jest-environment-jsdom": "^29.5.0",
     "jest-image-snapshot": "^6.0.0",
-    "jsdoc": "^3.4.3",
+    "jsdoc": "^4.0.2",
     "local-web-server": "^2.6.1",
     "prettier": "^2.8.4",
     "raw-loader": "^0.5.1",
