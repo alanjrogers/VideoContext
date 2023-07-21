@@ -107,6 +107,8 @@ export default class VideoContext {
         this._volume = 1.0;
         this._sourcesPlaying = undefined;
         this._destinationNode = new DestinationNode(this._gl, this._renderGraph);
+        this._renderTimes = 0;
+        this._prevTime = undefined;
 
         this._callbacks = new Map();
         Object.keys(VideoContext.EVENTS).forEach(name =>
@@ -791,7 +793,12 @@ export default class VideoContext {
     _isStalled() {
         for (let i = 0; i < this._sourceNodes.length; i++) {
             let sourceNode = this._sourceNodes[i];
-            if (!sourceNode._isReady()) {
+            // when video is playing only check if current playing node
+            // has content to play, this is to avoid the issue when player
+            // pauses when loading future nodes.
+            const shouldCheckNode =
+                this._state === VideoContext.STATE.PLAYING ? sourceNode._isElementPlaying : true;
+            if (!sourceNode._isReady() && shouldCheckNode) {
                 return true;
             }
         }
@@ -957,7 +964,23 @@ export default class VideoContext {
             for (let node of sortedNodes) {
                 if (this._sourceNodes.indexOf(node) === -1) {
                     node._update(this._currentTime);
-                    node._render();
+                    // to avoid hight GPU/Memory usage and improve performance
+                    // we should only render when video is playing or if current time has changed
+                    if (this._state === VideoContext.STATE.PLAYING) {
+                        node._render();
+                    } else {
+                        const ready = !this._isStalled();
+                        // if nodes are ready and current time has changed
+                        // allow 6 frames to render new changes
+                        if (ready && this._prevTime !== this._currentTime) {
+                            this._renderTimes = 6;
+                            this._prevTime = this._currentTime;
+                        }
+                        if (this._renderTimes > 0 && ready) {
+                            node._render();
+                            this._renderTimes = this._renderTimes - 1;
+                        }
+                    }
                 }
             }
         }
@@ -988,6 +1011,8 @@ export default class VideoContext {
             this._callbacks.set(VideoContext.EVENTS[name], [])
         );
         this._timelineCallbacks = [];
+        this._renderTimes = 0;
+        this._prevTime = undefined;
     }
 
     _deprecate(msg) {
