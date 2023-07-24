@@ -110,7 +110,6 @@ export default class VideoContext {
         this._volume = 1.0;
         this._sourcesPlaying = undefined;
         this._destinationNode = new DestinationNode(this._gl, this._renderGraph);
-        this._renderTimes = 0;
 
         this._callbacks = new Map();
         Object.keys(VideoContext.EVENTS).forEach(name =>
@@ -1013,7 +1012,6 @@ export default class VideoContext {
             this._callbacks.set(VideoContext.EVENTS[name], [])
         );
         this._timelineCallbacks = [];
-        this._renderTimes = 0;
     }
 
     _deprecate(msg) {
