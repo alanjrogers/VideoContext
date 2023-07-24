@@ -22,6 +22,7 @@ class ProcessingNode extends GraphNode {
         this._fragmentShader = compileShader(gl, definition.fragmentShader, gl.FRAGMENT_SHADER);
         this._definition = definition;
         this._properties = {}; //definition.properties;
+        this._isDirty = false;
         //copy definition properties
         for (let propertyName in definition.properties) {
             let propertyValue = definition.properties[propertyName].value;
@@ -137,6 +138,14 @@ class ProcessingNode extends GraphNode {
         gl.enableVertexAttribArray(texCoordLocation);
         gl.vertexAttribPointer(texCoordLocation, 2, gl.FLOAT, false, 0, 0);
         this._displayName = TYPE;
+    }
+
+    get isDirty() {
+        return this._isDirty;
+    }
+
+    set isDirty(isDirty) {
+        return this._isDirty = isDirty;
     }
 
     /**

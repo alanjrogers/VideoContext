@@ -42,6 +42,7 @@ export default class VideoContext {
      * @param {boolean} [options.useVideoElementCache=true] - Creates a pool of video element that will be all initialised at the same time. Important for mobile support
      * @param {number} [options.videoElementCacheSize=6] - Number of video element in the pool
      * @param {object} [options.webglContextAttributes] - A set of attributes used when getting the GL context. Alpha will always be `true`.
+     * @param {boolean} [options.renderOnDirtyNodeOnly=false] - Only render if a node isDirty flag is true to improve performance.
      *
      * @example
      * var canvasElement = document.getElementById("canvas");
@@ -61,11 +62,13 @@ export default class VideoContext {
             endOnLastSourceEnd = true,
             useVideoElementCache = true,
             videoElementCacheSize = 6,
-            webglContextAttributes = {}
+            webglContextAttributes = {},
+            renderOnDirtyNodeOnly = false
         } = {}
     ) {
         this._canvas = canvas;
         this._endOnLastSourceEnd = endOnLastSourceEnd;
+        this._renderOnDirtyNodeOnly = renderOnDirtyNodeOnly;
 
         this._gl = canvas.getContext(
             "experimental-webgl",
@@ -108,7 +111,6 @@ export default class VideoContext {
         this._sourcesPlaying = undefined;
         this._destinationNode = new DestinationNode(this._gl, this._renderGraph);
         this._renderTimes = 0;
-        this._prevTime = undefined;
 
         this._callbacks = new Map();
         Object.keys(VideoContext.EVENTS).forEach(name =>
@@ -964,17 +966,15 @@ export default class VideoContext {
             for (let node of sortedNodes) {
                 if (this._sourceNodes.indexOf(node) === -1) {
                     node._update(this._currentTime);
-                    // to avoid hight GPU/Memory usage and improve performance
-                    // we should only render when video is playing or if current time has changed
-                    if (this._state === VideoContext.STATE.PLAYING) {
+                    if (!this._renderOnDirtyNodeOnly || this._state === VideoContext.STATE.PLAYING) {
                         node._render();
                     } else {
                         const ready = !this._isStalled();
-                        // if nodes are ready and current time has changed
+                        // if node is ready and dirty
                         // allow 6 frames to render new changes
-                        if (ready && this._prevTime !== this._currentTime) {
+                        if (ready && node.isDirty) {
                             this._renderTimes = 6;
-                            this._prevTime = this._currentTime;
+                            node.isDirty = false;
                         }
                         if (this._renderTimes > 0 && ready) {
                             node._render();
@@ -1012,7 +1012,6 @@ export default class VideoContext {
         );
         this._timelineCallbacks = [];
         this._renderTimes = 0;
-        this._prevTime = undefined;
     }
 
     _deprecate(msg) {
