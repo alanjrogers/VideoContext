@@ -963,23 +963,25 @@ export default class VideoContext {
                 }
             }
 
+            const ready = !this._isStalled();
+            const isDirty = sortedNodes.some(node => node.isDirty);
+            const renderDirtyNodes = ready && isDirty && this._renderOnDirtyNodeOnly;
+
             for (let node of sortedNodes) {
-                if (this._sourceNodes.indexOf(node) === -1) {
+                if (renderDirtyNodes) {
+                    // make sure nodes are updated before rendering the processing nodes
                     node._update(this._currentTime);
-                    if (!this._renderOnDirtyNodeOnly || this._state === VideoContext.STATE.PLAYING) {
+                }
+                if (this._sourceNodes.indexOf(node) === -1) {
+                    if (
+                        !this._renderOnDirtyNodeOnly ||
+                        this._state === VideoContext.STATE.PLAYING
+                    ) {
+                        node._update(this._currentTime);
                         node._render();
-                    } else {
-                        const ready = !this._isStalled();
-                        // if node is ready and dirty
-                        // allow 6 frames to render new changes
-                        if (ready && node.isDirty) {
-                            this._renderTimes = 6;
-                            node.isDirty = false;
-                        }
-                        if (this._renderTimes > 0 && ready) {
-                            node._render();
-                            this._renderTimes = this._renderTimes - 1;
-                        }
+                    } else if (renderDirtyNodes) {
+                        node._render();
+                        node.isDirty = false;
                     }
                 }
             }
