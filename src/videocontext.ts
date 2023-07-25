@@ -910,7 +910,9 @@ export default class VideoContext {
             // has content to play, this is to avoid the issue when player
             // pauses when loading future nodes.
             const shouldCheckNode =
-                (this._state === VideoContext.STATE.PLAYING && sourceNode instanceof MediaNode) ? sourceNode._isElementPlaying : true;
+                this._state === VideoContext.STATE.PLAYING && sourceNode instanceof MediaNode
+                    ? sourceNode._isElementPlaying
+                    : true;
             if (!sourceNode._isReady() && shouldCheckNode) {
                 return true;
             }
@@ -1075,7 +1077,7 @@ export default class VideoContext {
             }
 
             const ready = !this._isStalled();
-            const isDirty = sortedNodes.some(node => node.isDirty);
+            const isDirty = sortedNodes.some((node) => node.isDirty);
             const timeChanged = this._prevTime !== this._currentTime;
             const renderDirtyNodes =
                 ready && (isDirty || timeChanged) && this._renderOnDirtyNodeOnly;
@@ -1096,6 +1098,7 @@ export default class VideoContext {
                         (node as ProcessingNode)._render();
                     } else if (renderDirtyNodes) {
                         (node as ProcessingNode)._update(this._currentTime);
+                        (node as ProcessingNode)._render();
                         node.isDirty = false;
                         this._prevTime = this._currentTime;
                     }
