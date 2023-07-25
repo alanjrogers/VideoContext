@@ -110,6 +110,7 @@ export default class VideoContext {
         this._volume = 1.0;
         this._sourcesPlaying = undefined;
         this._destinationNode = new DestinationNode(this._gl, this._renderGraph);
+        this._prevTime = undefined;
 
         this._callbacks = new Map();
         Object.keys(VideoContext.EVENTS).forEach(name =>
@@ -964,7 +965,8 @@ export default class VideoContext {
 
             const ready = !this._isStalled();
             const isDirty = sortedNodes.some(node => node.isDirty);
-            const renderDirtyNodes = ready && isDirty && this._renderOnDirtyNodeOnly;
+            const timeChanged = this._prevTime !== this._currentTime;
+            const renderDirtyNodes = ready && (isDirty || timeChanged) && this._renderOnDirtyNodeOnly;
 
             for (let node of sortedNodes) {
                 if (renderDirtyNodes) {
@@ -981,6 +983,7 @@ export default class VideoContext {
                     } else if (renderDirtyNodes) {
                         node._render();
                         node.isDirty = false;
+                        this._prevTime = this._currentTime;
                     }
                 }
             }
@@ -1012,6 +1015,7 @@ export default class VideoContext {
             this._callbacks.set(VideoContext.EVENTS[name], [])
         );
         this._timelineCallbacks = [];
+        this._prevTime = undefined;
     }
 
     _deprecate(msg) {
