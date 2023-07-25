@@ -145,7 +145,7 @@ class ProcessingNode extends GraphNode {
     }
 
     set isDirty(isDirty) {
-        return this._isDirty = isDirty;
+        this._isDirty = isDirty;
     }
 
     /**
