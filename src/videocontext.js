@@ -966,7 +966,8 @@ export default class VideoContext {
             const ready = !this._isStalled();
             const isDirty = sortedNodes.some(node => node.isDirty);
             const timeChanged = this._prevTime !== this._currentTime;
-            const renderDirtyNodes = ready && (isDirty || timeChanged) && this._renderOnDirtyNodeOnly;
+            const renderDirtyNodes =
+                ready && (isDirty || timeChanged) && this._renderOnDirtyNodeOnly;
 
             for (let node of sortedNodes) {
                 if (renderDirtyNodes) {

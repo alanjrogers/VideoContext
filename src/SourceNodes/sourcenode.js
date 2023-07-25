@@ -43,6 +43,7 @@ class SourceNode extends GraphNode {
         this._ready = false;
         this._loadCalled = false;
         this._stretchPaused = false;
+        this._isDirty = false;
         this._texture = createElementTexture(gl);
         gl.texImage2D(
             gl.TEXTURE_2D,
@@ -139,6 +140,14 @@ class SourceNode extends GraphNode {
 
     get stretchPaused() {
         return this._stretchPaused;
+    }
+
+    get isDirty() {
+        return this._isDirty;
+    }
+
+    set isDirty(isDirty) {
+        this._isDirty = isDirty;
     }
 
     _load() {
