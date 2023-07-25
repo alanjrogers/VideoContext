@@ -12,7 +12,7 @@ class GraphNode {
     _gl: WebGLRenderingContext;
     _rendered: boolean;
     _displayName: string;
-    _isDirty: boolean;
+    _needsRender: boolean;
     /**
      * Base class from which all processing and source nodes are derrived.
      */
@@ -32,7 +32,7 @@ class GraphNode {
         this._renderGraph = renderGraph;
         this._rendered = false;
         this._displayName = TYPE;
-        this._isDirty = false;
+        this._needsRender = false;
     }
 
     /**
@@ -96,12 +96,12 @@ class GraphNode {
         return this._destroyed;
     }
 
-    get isDirty() {
-        return this._isDirty;
+    get needsRender() {
+        return this._needsRender;
     }
 
-    set isDirty(isDirty) {
-        this._isDirty = isDirty;
+    set needsRender(needsRender) {
+        this._needsRender = needsRender;
     }
 
     /**

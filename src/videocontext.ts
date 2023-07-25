@@ -102,8 +102,8 @@ export default class VideoContext {
     _destinationNode!: DestinationNode;
     _callbacks!: Map<string, Function[]>;
     _timelineCallbacks!: Array<TimelineCallback>;
-    _renderOnDirtyNodeOnly: boolean;
-    _prevTime: number | undefined;
+    _renderNodeOnDemandOnly: boolean;
+    _lastRenderTime: number | undefined;
     /**
      * Initialise the VideoContext and render to the specific canvas. A 2nd parameter can be passed to the constructor which is a function that get's called if the VideoContext fails to initialise.
      *
@@ -115,7 +115,7 @@ export default class VideoContext {
      * @param {boolean} [options.useVideoElementCache=true] - Creates a pool of video element that will be all initialised at the same time. Important for mobile support
      * @param {number} [options.videoElementCacheSize=6] - Number of video element in the pool
      * @param {object} [options.webglContextAttributes] - A set of attributes used when getting the GL context. Alpha will always be `true`.
-     * @param {boolean} [options.renderOnDirtyNodeOnly=false] - Only render if a node isDirty flag is true to improve performance.
+     * @param {boolean} [options.renderNodeOnDemandOnly=false] - Only render if a node needsRender flag is true to improve performance.
      *
      * @example
      * var canvasElement = document.getElementById("canvas");
@@ -136,12 +136,12 @@ export default class VideoContext {
             useVideoElementCache = true,
             videoElementCacheSize = 6,
             webglContextAttributes = {},
-            renderOnDirtyNodeOnly = false
+            renderNodeOnDemandOnly = false
         } = {}
     ) {
         this._canvas = canvas;
         this._endOnLastSourceEnd = endOnLastSourceEnd;
-        this._renderOnDirtyNodeOnly = renderOnDirtyNodeOnly;
+        this._renderNodeOnDemandOnly = renderNodeOnDemandOnly;
 
         this._gl = canvas.getContext(
             "experimental-webgl",
@@ -183,7 +183,7 @@ export default class VideoContext {
         this._volume = 1.0;
         this._sourcesPlaying = undefined;
         this._destinationNode = new DestinationNode(this._gl, this._renderGraph);
-        this._prevTime = undefined;
+        this._lastRenderTime = undefined;
 
         this._callbacks = new Map();
         Object.keys(VideoContext.EVENTS).forEach((name) =>
@@ -1077,13 +1077,13 @@ export default class VideoContext {
             }
 
             const ready = !this._isStalled();
-            const isDirty = sortedNodes.some((node) => node.isDirty);
-            const timeChanged = this._prevTime !== this._currentTime;
-            const renderDirtyNodes =
-                ready && (isDirty || timeChanged) && this._renderOnDirtyNodeOnly;
+            const needsRender = sortedNodes.some((node) => node.needsRender);
+            const timeChanged = this._lastRenderTime !== this._currentTime;
+            const renderNodes =
+                ready && (needsRender || timeChanged) && this._renderNodeOnDemandOnly;
 
             for (let node of sortedNodes) {
-                if (renderDirtyNodes) {
+                if (renderNodes) {
                     // make sure nodes are updated before rendering the processing nodes
                     if (node instanceof SourceNode || node instanceof ProcessingNode) {
                         node._update(this._currentTime);
@@ -1091,18 +1091,25 @@ export default class VideoContext {
                 }
                 if ((this._sourceNodes as GraphNode[]).indexOf(node) === -1) {
                     if (
-                        !this._renderOnDirtyNodeOnly ||
+                        !this._renderNodeOnDemandOnly ||
                         this._state === VideoContext.STATE.PLAYING
                     ) {
                         (node as ProcessingNode)._update(this._currentTime);
                         (node as ProcessingNode)._render();
-                    } else if (renderDirtyNodes) {
+                        this._lastRenderTime = this._currentTime;
+                    } else if (renderNodes) {
                         (node as ProcessingNode)._update(this._currentTime);
                         (node as ProcessingNode)._render();
-                        node.isDirty = false;
-                        this._prevTime = this._currentTime;
                     }
                 }
+                if (renderNodes) {
+                    node.needsRender = false;
+                }
+            }
+            // after nodes are rendered
+            // update the previous time
+            if (renderNodes) {
+                this._lastRenderTime = this._currentTime;
             }
         }
     }
@@ -1134,7 +1141,7 @@ export default class VideoContext {
             this._callbacks.set(VideoContext.EVENTS[name as keyof typeof VideoContext.EVENTS], [])
         );
         this._timelineCallbacks = [];
-        this._prevTime = undefined;
+        this._lastRenderTime = undefined;
     }
 
     _deprecate(msg: string) {
