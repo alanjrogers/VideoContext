@@ -12,6 +12,7 @@ class GraphNode {
     _gl: WebGLRenderingContext;
     _rendered: boolean;
     _displayName: string;
+    _needsRender: boolean;
     /**
      * Base class from which all processing and source nodes are derrived.
      */
@@ -31,6 +32,7 @@ class GraphNode {
         this._renderGraph = renderGraph;
         this._rendered = false;
         this._displayName = TYPE;
+        this._needsRender = false;
     }
 
     /**
@@ -92,6 +94,14 @@ class GraphNode {
      */
     get destroyed() {
         return this._destroyed;
+    }
+
+    get needsRender() {
+        return this._needsRender;
+    }
+
+    set needsRender(needsRender) {
+        this._needsRender = needsRender;
     }
 
     /**
