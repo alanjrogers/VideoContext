@@ -1083,6 +1083,9 @@ export default class VideoContext {
                 ready && (needsRender || timeChanged) && this._renderNodeOnDemandOnly;
 
             for (let node of sortedNodes) {
+                if (renderNodes && (node instanceof SourceNode || node instanceof ProcessingNode)) {
+                    node._update(this._currentTime);
+                }
                 if ((this._sourceNodes as GraphNode[]).indexOf(node) === -1) {
                     if (
                         !this._renderNodeOnDemandOnly ||
