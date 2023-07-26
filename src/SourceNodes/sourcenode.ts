@@ -414,7 +414,7 @@ abstract class SourceNode extends GraphNode {
         //update this source nodes texture
         if (this._element === undefined || this._ready === false) return true;
 
-        if (!this._renderPaused && this._state === STATE.paused) {
+        if ((!this._renderPaused && this._state === STATE.paused) || this._needsRender) {
             if (triggerTextureUpdate) updateTexture(this._gl, this._texture, this._element as any);
             this._renderPaused = true;
         }
