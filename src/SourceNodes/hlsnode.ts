@@ -27,7 +27,7 @@ class HLSNode extends MediaNode {
         sourceOffset: number = 0,
         preloadTime: number = 10,
         duration: number | undefined,
-        debug: boolean = false,
+        debug: boolean = false
     ) {
         super(
             undefined, // don't pass the src now, only when _load is called
@@ -42,10 +42,12 @@ class HLSNode extends MediaNode {
         // seting up the max buffer to match the duration of the clip
         // to avoid preloading to much sections of the video
         // when calling _load and improve performance
-        const maxBufferLength = duration === undefined ? DEFAULT_MAX_BUFFER_LENGTH :
-            duration < DEFAULT_MAX_BUFFER_LENGTH
-                ? duration
-                : DEFAULT_MAX_BUFFER_LENGTH;
+        const maxBufferLength =
+            duration === undefined
+                ? DEFAULT_MAX_BUFFER_LENGTH
+                : duration < DEFAULT_MAX_BUFFER_LENGTH
+                    ? duration
+                    : DEFAULT_MAX_BUFFER_LENGTH;
 
         this._duration = duration;
 
@@ -55,7 +57,7 @@ class HLSNode extends MediaNode {
             startPosition: sourceOffset,
             maxBufferLength: maxBufferLength,
             maxMaxBufferLength: duration,
-            backBufferLength: duration,
+            backBufferLength: duration
         });
 
         this.hls.on(Hls.Events.BUFFER_APPENDED, () => {
@@ -64,7 +66,7 @@ class HLSNode extends MediaNode {
                 const end = this._element.buffered.end(0);
                 console.debug(`clipId ${this._id}: ${start} - ${end}`);
 
-                if (start <= sourceOffset && end >= (sourceOffset + duration)) {
+                if (start <= sourceOffset && end >= sourceOffset + duration) {
                     this.hls.stopLoad();
                     this._hlsLoading = false;
                 }
@@ -96,7 +98,9 @@ class HLSNode extends MediaNode {
         });
 
         if (debug) {
-            console.debug(`clipId: ${id} startOffset: ${sourceOffset}, duration: ${duration}, maxBufferLength: ${maxBufferLength}`);
+            console.debug(
+                `clipId: ${id} startOffset: ${sourceOffset}, duration: ${duration}, maxBufferLength: ${maxBufferLength}`
+            );
         }
 
         //Set the source path.

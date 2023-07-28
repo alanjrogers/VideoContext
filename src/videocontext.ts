@@ -575,7 +575,14 @@ export default class VideoContext {
      * var ctx = new VideoContext(canvasElement);
      * var videoNode = ctx.hls("test", "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8");
      */
-    hls(id: string, src: string, duration?: number, sourceOffset: number = 0, preloadTime: number = 4, debug: boolean = false): HLSNode {
+    hls(
+        id: string,
+        src: string,
+        duration?: number,
+        sourceOffset: number = 0,
+        preloadTime: number = 4,
+        debug: boolean = false
+    ): HLSNode {
         let hlsNode = new HLSNode(
             id,
             src,
@@ -586,7 +593,7 @@ export default class VideoContext {
             sourceOffset,
             preloadTime,
             duration,
-            debug,
+            debug
         );
         this._sourceNodes.push(hlsNode);
         return hlsNode;
