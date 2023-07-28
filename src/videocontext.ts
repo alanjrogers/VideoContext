@@ -26,6 +26,7 @@ import DEFINITIONS, { IDefinition } from "./Definitions/definitions";
 import ProcessingNode from "./ProcessingNodes/processingnode";
 import GraphNode from "./graphnode";
 import MediaNode from "./SourceNodes/medianode";
+import HLSNode from "./SourceNodes/hlsnode";
 
 let updateablesManager = new UpdateablesManager();
 
@@ -556,6 +557,35 @@ export default class VideoContext {
         );
         this._sourceNodes.push(videoNode);
         return videoNode;
+    }
+
+    /**
+     * Create a new node representing a HLS source
+     *
+     * @param {string|HTMLVideoElement|MediaStream} - The URL or video element to create the video from.
+     * @param {number} [sourceOffset=0] - Offset into the start of the source video to start playing from.
+     * @param {number} [preloadTime=4] - How many seconds before the video is to be played to start loading it.
+     * @param {number} [maxBufferLength=30] - How large a buffer to use for the HLS stream.
+     * @return {HLSNode} A new HLSNode.
+     *
+     * @example
+     * var canvasElement = document.getElementById("canvas");
+     * var ctx = new VideoContext(canvasElement);
+     * var videoNode = ctx.hls("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8");
+     */
+    hls(src: string, sourceOffset = 0, preloadTime = 4, maxBufferLength = 30) {
+        let hlsNode = new HLSNode(
+            src,
+            this._gl,
+            this._renderGraph,
+            this._currentTime,
+            this._playbackRate,
+            sourceOffset,
+            preloadTime,
+            maxBufferLength
+        );
+        this._sourceNodes.push(hlsNode);
+        return hlsNode;
     }
 
     /**
