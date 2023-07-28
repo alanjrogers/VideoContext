@@ -562,19 +562,22 @@ export default class VideoContext {
     /**
      * Create a new node representing a HLS source
      *
-     * @param {string|HTMLVideoElement|MediaStream} - The URL or video element to create the video from.
+     * @param {string} [id] - The id of the node used mostly for debugging.
+     * @param {string} [src] - The hls stream URL to create the video from.
+     * @param {number} [duration=undefiend] - The duration of the hls srouce (may be less than the actual video length)
+     *                              the node will prevent loading beyond this time. If undefined it will not be limited.
      * @param {number} [sourceOffset=0] - Offset into the start of the source video to start playing from.
      * @param {number} [preloadTime=4] - How many seconds before the video is to be played to start loading it.
-     * @param {number} [maxBufferLength=30] - How large a buffer to use for the HLS stream.
      * @return {HLSNode} A new HLSNode.
      *
      * @example
      * var canvasElement = document.getElementById("canvas");
      * var ctx = new VideoContext(canvasElement);
-     * var videoNode = ctx.hls("https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8");
+     * var videoNode = ctx.hls("test", "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8");
      */
-    hls(src: string, sourceOffset = 0, preloadTime = 4, maxBufferLength = 30) {
+    hls(id: string, src: string, duration?: number, sourceOffset: number = 0, preloadTime: number = 4, debug: boolean = false): HLSNode {
         let hlsNode = new HLSNode(
+            id,
             src,
             this._gl,
             this._renderGraph,
@@ -582,7 +585,8 @@ export default class VideoContext {
             this._playbackRate,
             sourceOffset,
             preloadTime,
-            maxBufferLength
+            duration,
+            debug,
         );
         this._sourceNodes.push(hlsNode);
         return hlsNode;
