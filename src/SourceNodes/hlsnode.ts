@@ -4,9 +4,6 @@ import Hls from "hls.js";
 
 const TYPE = "HLSNode";
 
-// TODO(danareyes): when playing the video the load
-// of the node adds a lag, less buffer time seems to
-// imporve that we should figure out why
 const DEFAULT_MAX_BUFFER_LENGTH = 30; // seconds
 
 class HLSNode extends MediaNode {
@@ -14,7 +11,6 @@ class HLSNode extends MediaNode {
     private src: string;
     private loaded: boolean;
     private _id: string;
-    private _duration: number | undefined;
     private _hlsLoading: boolean = false;
 
     constructor(
@@ -39,7 +35,7 @@ class HLSNode extends MediaNode {
             preloadTime
         );
 
-        // seting up the max buffer to match the duration of the clip
+        // setting up the max buffer to match the duration of the clip
         // to avoid preloading to much sections of the video
         // when calling _load and improve performance
         const maxBufferLength =
@@ -48,8 +44,6 @@ class HLSNode extends MediaNode {
                 : duration < DEFAULT_MAX_BUFFER_LENGTH
                     ? duration
                     : DEFAULT_MAX_BUFFER_LENGTH;
-
-        this._duration = duration;
 
         //Create a HLS object.
         this.hls = new Hls({
@@ -64,42 +58,14 @@ class HLSNode extends MediaNode {
             if (this._element && this._element.buffered.length > 0 && duration !== undefined) {
                 const start = this._element.buffered.start(0);
                 const end = this._element.buffered.end(0);
-                console.debug(`clipId ${this._id}: ${start} - ${end}`);
-
-                if (start <= sourceOffset && end >= sourceOffset + duration) {
-                    this.hls.stopLoad();
-                    this._hlsLoading = false;
-                }
+                console.debug(`clipId ${this._id}, buffered: ${start} - ${end}`);
             }
         });
 
-        this.hls.on(Hls.Events.BUFFER_EOS, () => {
-            console.debug(`clipId ${this._id}: BUFFER_EOS loading`);
-            if (!this._hlsLoading) {
-                this.hls.startLoad(sourceOffset);
-                this._hlsLoading = true;
-            }
-        });
-
-        this.hls.on(Hls.Events.BUFFER_FLUSHED, () => {
-            if (!this._hlsLoading) {
-                console.debug(`clipId ${this._id}: BUFFER_FLUSHED loading`);
-                this.hls.startLoad(sourceOffset);
-                this._hlsLoading = true;
-            }
-        });
-
-        this.hls.on(Hls.Events.BUFFER_RESET, () => {
-            if (!this._hlsLoading) {
-                console.debug(`clipId ${this._id}: BUFFER_RESET loading`);
-                this.hls.startLoad(sourceOffset);
-                this._hlsLoading = true;
-            }
-        });
 
         if (debug) {
             console.debug(
-                `clipId: ${id} startOffset: ${sourceOffset}, duration: ${duration}, maxBufferLength: ${maxBufferLength}`
+                `clipId: ${id} start: ${sourceOffset}, end: ${duration !== undefined ? sourceOffset + duration : "end"}, maxBufferLength: ${maxBufferLength}`
             );
         }
 
@@ -136,10 +102,21 @@ class HLSNode extends MediaNode {
             video.width = 100;
             container.appendChild(video);
         }
+        if (!this._hlsLoading) {
+            this.hls.attachMedia(this._element as HTMLMediaElement);
+            this.hls.loadSource(this.src);
+            this._hlsLoading = true;
+        }
         super._load();
     }
 
     _unload() {
+        if (this._hlsLoading) {
+            this.hls.stopLoad();
+            this.hls.detachMedia();
+            this._hlsLoading = false;
+        }
+
         // TODO(danareyes): add unload logic here similar to what videocontext is doing internally
         // create a video element cache where video elements can be reuse so we don't create one element per node
         // we can have lets say 5 video html elements and reuse them.
@@ -147,6 +124,20 @@ class HLSNode extends MediaNode {
     }
 
     destroy() {
+        this._unload();
+        this.hls.detachMedia();
+
+        this._element?.remove();
+        this._element = undefined;
+        this.loaded = false;
+        this._hlsLoading = false;
+
+        let container = document.getElementById("video-debug-container");
+        if (container) {
+            container.remove();
+        }
+
+
         if (this.hls) {
             this.hls.destroy();
         }
