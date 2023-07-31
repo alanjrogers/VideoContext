@@ -11,7 +11,7 @@ import {
     generateRandomId
 } from "./utils";
 import NODES from "./SourceNodes/nodes";
-import VideoNode, { VIDEOTYPE } from "./SourceNodes/videonode";
+import VideoNode from "./SourceNodes/videonode";
 import AudioNode from "./SourceNodes/audionode";
 import ImageNode from "./SourceNodes/imagenode";
 import CanvasNode from "./SourceNodes/canvasnode";
@@ -448,9 +448,9 @@ export default class VideoContext {
             throw new RangeError("playbackRate must be greater than 0");
         }
         for (let node of this._sourceNodes) {
-            if (node.constructor.name === VIDEOTYPE) {
-                (node as VideoNode)._globalPlaybackRate = rate;
-                (node as VideoNode)._playbackRateUpdated = true;
+            if (node instanceof MediaNode) {
+                (node as MediaNode)._globalPlaybackRate = rate;
+                (node as MediaNode)._playbackRateUpdated = true;
             }
         }
         this._playbackRate = rate;
