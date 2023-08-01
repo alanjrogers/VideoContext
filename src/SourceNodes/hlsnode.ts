@@ -7,11 +7,11 @@ const TYPE = "HLSNode";
 const DEFAULT_MAX_BUFFER_LENGTH = 30; // seconds
 
 class HLSNode extends MediaNode {
-    private hls: Hls;
-    private src: string;
-    private loaded: boolean;
-    private _id: string;
-    private _hlsLoading: boolean = false;
+    _hls: Hls;
+    _src: string;
+    _loaded: boolean;
+    _hlsLoading: boolean = false;
+    _duration: number | undefined;
 
     constructor(
         id: string,
@@ -35,6 +35,7 @@ class HLSNode extends MediaNode {
             preloadTime
         );
 
+        this._duration = duration;
         // setting up the max buffer to match the duration of the clip
         // to avoid preloading to much sections of the video
         // when calling _load and improve performance
@@ -46,7 +47,7 @@ class HLSNode extends MediaNode {
                     : DEFAULT_MAX_BUFFER_LENGTH;
 
         //Create a HLS object.
-        this.hls = new Hls({
+        this._hls = new Hls({
             debug: debug,
             startPosition: sourceOffset,
             maxBufferLength: maxBufferLength,
@@ -54,57 +55,31 @@ class HLSNode extends MediaNode {
             backBufferLength: duration
         });
 
-        this.hls.on(Hls.Events.BUFFER_APPENDED, () => {
-            if (this._element && this._element.buffered.length > 0 && duration !== undefined) {
-                const start = this._element.buffered.start(0);
-                const end = this._element.buffered.end(0);
-                console.debug(`clipId ${this._id}, buffered: ${start} - ${end}`);
-            }
-        });
-
-
-        if (debug) {
-            console.debug(
-                `clipId: ${id} start: ${sourceOffset}, end: ${duration !== undefined ? sourceOffset + duration : "end"}, maxBufferLength: ${maxBufferLength}`
-            );
-        }
-
         //Set the source path.
         this._id = id;
-        this.src = src;
-        this.loaded = false;
+        this._src = src;
+        this._elementURL = src;
+        this._loaded = false;
         this._displayName = TYPE;
         this._elementType = "hls";
     }
 
     _load() {
-        if (!this.loaded) {
+        if (!this._loaded) {
             //Create a video element.
             const video = document.createElement("video");
-            this.hls.attachMedia(video);
-            this.hls.loadSource(this.src);
+            video.id = this._id;
+            this._hls.attachMedia(video);
+            this._hls.loadSource(this._src);
             this._element = video;
 
-            this.loaded = true;
+            this._loaded = true;
             this._hlsLoading = true;
-            this.hls.startLevel = this.hls.levels.length - 1;
-
-            // add this for debugging video elements
-            let container = document.getElementById("video-debug-container");
-            if (!container) {
-                container = document.createElement("div");
-                container.id = "video-debug-container";
-                container.style.position = "absolute";
-                container.style.top = "0";
-                container.style.backgroundColor = "rgba(0,0,0,0.5)";
-                document.body.append(container);
-            }
-            video.width = 100;
-            container.appendChild(video);
+            this._hls.startLevel = this._hls.levels.length - 1;
         }
         if (!this._hlsLoading) {
-            this.hls.attachMedia(this._element as HTMLMediaElement);
-            this.hls.loadSource(this.src);
+            // this.hls.attachMedia(this._element as HTMLMediaElement);
+            this._hls.loadSource(this._src);
             this._hlsLoading = true;
         }
         super._load();
@@ -112,8 +87,8 @@ class HLSNode extends MediaNode {
 
     _unload() {
         if (this._hlsLoading) {
-            this.hls.stopLoad();
-            this.hls.detachMedia();
+            this._hls.stopLoad();
+            // this.hls.detachMedia();
             this._hlsLoading = false;
         }
 
@@ -125,21 +100,15 @@ class HLSNode extends MediaNode {
 
     destroy() {
         this._unload();
-        this.hls.detachMedia();
+        this._hls.detachMedia();
 
         this._element?.remove();
         this._element = undefined;
-        this.loaded = false;
+        this._loaded = false;
         this._hlsLoading = false;
 
-        let container = document.getElementById("video-debug-container");
-        if (container) {
-            container.remove();
-        }
-
-
-        if (this.hls) {
-            this.hls.destroy();
+        if (this._hls) {
+            this._hls.destroy();
         }
         super.destroy();
     }
