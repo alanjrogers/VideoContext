@@ -470,7 +470,7 @@ export default class VideoContext {
      */
     set volume(vol) {
         for (let node of this._sourceNodes) {
-            if (node instanceof VideoNode || node instanceof AudioNode) {
+            if (node instanceof MediaNode) {
                 node.volume = vol;
             }
         }
