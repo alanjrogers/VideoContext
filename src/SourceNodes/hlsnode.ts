@@ -69,6 +69,7 @@ class HLSNode extends MediaNode {
             // Create a video element.
             const video = document.createElement("video");
             video.id = this._id;
+            video.volume = this._attributes.volume!;
             this._hls.attachMedia(video);
             this._hls.loadSource(this._src);
             this._element = video;
