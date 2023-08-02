@@ -66,7 +66,7 @@ class HLSNode extends MediaNode {
 
     _load() {
         if (!this._loaded) {
-            //Create a video element.
+            // Create a video element.
             const video = document.createElement("video");
             video.id = this._id;
             this._hls.attachMedia(video);
@@ -78,7 +78,6 @@ class HLSNode extends MediaNode {
             this._hls.startLevel = this._hls.levels.length - 1;
         }
         if (!this._hlsLoading) {
-            // this.hls.attachMedia(this._element as HTMLMediaElement);
             this._hls.loadSource(this._src);
             this._hlsLoading = true;
         }
@@ -88,13 +87,8 @@ class HLSNode extends MediaNode {
     _unload() {
         if (this._hlsLoading) {
             this._hls.stopLoad();
-            // this.hls.detachMedia();
             this._hlsLoading = false;
         }
-
-        // TODO(danareyes): add unload logic here similar to what videocontext is doing internally
-        // create a video element cache where video elements can be reuse so we don't create one element per node
-        // we can have lets say 5 video html elements and reuse them.
         super._unload();
     }
 

@@ -1,5 +1,5 @@
 //Matthew Shotton, R&D User Experience,© BBC 2015
-import { updateTexture, clearTexture, createElementTexture } from "../utils";
+import { updateTexture, clearTexture, createElementTexture, generateRandomId } from "../utils";
 import GraphNode from "../graphnode";
 import RenderGraph from "../rendergraph";
 import MediaNode from "./medianode";
@@ -80,7 +80,7 @@ abstract class SourceNode extends GraphNode {
         this._callbacks = [];
         this._renderPaused = false;
         this._displayName = TYPE;
-        this._id = src;
+        this._id = generateRandomId();
     }
 
     /**
