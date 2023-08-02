@@ -43,8 +43,8 @@ class HLSNode extends MediaNode {
             duration === undefined
                 ? DEFAULT_MAX_BUFFER_LENGTH
                 : duration < DEFAULT_MAX_BUFFER_LENGTH
-                    ? duration
-                    : DEFAULT_MAX_BUFFER_LENGTH;
+                ? duration
+                : DEFAULT_MAX_BUFFER_LENGTH;
 
         //Create a HLS object.
         this._hls = new Hls({
