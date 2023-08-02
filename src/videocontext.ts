@@ -11,7 +11,7 @@ import {
     generateRandomId
 } from "./utils";
 import NODES from "./SourceNodes/nodes";
-import VideoNode, { VIDEOTYPE } from "./SourceNodes/videonode";
+import VideoNode from "./SourceNodes/videonode";
 import AudioNode from "./SourceNodes/audionode";
 import ImageNode from "./SourceNodes/imagenode";
 import CanvasNode from "./SourceNodes/canvasnode";
@@ -26,6 +26,7 @@ import DEFINITIONS, { IDefinition } from "./Definitions/definitions";
 import ProcessingNode from "./ProcessingNodes/processingnode";
 import GraphNode from "./graphnode";
 import MediaNode from "./SourceNodes/medianode";
+import HLSNode from "./SourceNodes/hlsnode";
 
 let updateablesManager = new UpdateablesManager();
 
@@ -447,9 +448,9 @@ export default class VideoContext {
             throw new RangeError("playbackRate must be greater than 0");
         }
         for (let node of this._sourceNodes) {
-            if (node.constructor.name === VIDEOTYPE) {
-                (node as VideoNode)._globalPlaybackRate = rate;
-                (node as VideoNode)._playbackRateUpdated = true;
+            if (node instanceof MediaNode) {
+                (node as MediaNode)._globalPlaybackRate = rate;
+                (node as MediaNode)._playbackRateUpdated = true;
             }
         }
         this._playbackRate = rate;
@@ -469,7 +470,7 @@ export default class VideoContext {
      */
     set volume(vol) {
         for (let node of this._sourceNodes) {
-            if (node instanceof VideoNode || node instanceof AudioNode) {
+            if (node instanceof MediaNode) {
                 node.volume = vol;
             }
         }
@@ -556,6 +557,46 @@ export default class VideoContext {
         );
         this._sourceNodes.push(videoNode);
         return videoNode;
+    }
+
+    /**
+     * Create a new node representing a HLS source
+     *
+     * @param {string} [id] - The id of the node used mostly for debugging.
+     * @param {string} [src] - The hls stream URL to create the video from.
+     * @param {number} [duration=undefiend] - The duration of the hls srouce (may be less than the actual video length)
+     *                              the node will prevent loading beyond this time. If undefined it will not be limited.
+     * @param {number} [sourceOffset=0] - Offset into the start of the source video to start playing from.
+     * @param {number} [preloadTime=4] - How many seconds before the video is to be played to start loading it.
+     * @return {HLSNode} A new HLSNode.
+     *
+     * @example
+     * var canvasElement = document.getElementById("canvas");
+     * var ctx = new VideoContext(canvasElement);
+     * var videoNode = ctx.hls("test", "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8");
+     */
+    hls(
+        id: string,
+        src: string,
+        duration?: number,
+        sourceOffset: number = 0,
+        preloadTime: number = 4,
+        debug: boolean = false
+    ): HLSNode {
+        let hlsNode = new HLSNode(
+            id,
+            src,
+            this._gl,
+            this._renderGraph,
+            this._currentTime,
+            this._playbackRate,
+            sourceOffset,
+            preloadTime,
+            duration,
+            debug
+        );
+        this._sourceNodes.push(hlsNode);
+        return hlsNode;
     }
 
     /**
