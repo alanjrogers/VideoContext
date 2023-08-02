@@ -76,8 +76,7 @@ class HLSNode extends MediaNode {
             this._loaded = true;
             this._hlsLoading = true;
             this._hls.startLevel = this._hls.levels.length - 1;
-        }
-        if (!this._hlsLoading) {
+        } else if (!this._hlsLoading) {
             this._hls.loadSource(this._src);
             this._hlsLoading = true;
         }
