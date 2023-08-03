@@ -6,7 +6,7 @@ const TYPE = "HLSNode";
 
 const DEFAULT_MAX_BUFFER_LENGTH = 30; // seconds
 
-class HLSNode extends MediaNode {
+export class HLSNode extends MediaNode {
     _hls: Hls;
     _src: string;
     _loaded: boolean;

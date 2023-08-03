@@ -15,7 +15,7 @@ let STATE = {
 
 const TYPE = "SourceNode";
 
-abstract class SourceNode extends GraphNode {
+export abstract class SourceNode extends GraphNode {
     _startTime: number;
     _stopTime: number;
     _displayName: string;

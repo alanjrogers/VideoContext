@@ -28,6 +28,10 @@ import GraphNode from "./graphnode";
 import MediaNode from "./SourceNodes/medianode";
 import HLSNode from "./SourceNodes/hlsnode";
 
+// Extra exports for debugging
+export { SourceNode } from "./SourceNodes/sourcenode";
+export { HLSNode } from "./SourceNodes/hlsnode";
+
 let updateablesManager = new UpdateablesManager();
 
 interface TimelineCallback {
