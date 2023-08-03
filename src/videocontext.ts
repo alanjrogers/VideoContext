@@ -951,13 +951,7 @@ export default class VideoContext {
     _isStalled() {
         for (let i = 0; i < this._sourceNodes.length; i++) {
             let sourceNode = this._sourceNodes[i];
-            // when video is playing only check if current playing node
-            // has content to play, this is to avoid the issue when player
-            // pauses when loading future nodes.
-            const shouldCheckNode =
-                this._state === VideoContext.STATE.PLAYING &&
-                sourceNode.state === SOURCENODESTATE.playing;
-            if (!sourceNode._isReady() && shouldCheckNode) {
+            if (!sourceNode._isReady()) {
                 return true;
             }
         }

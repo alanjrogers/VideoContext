@@ -1,6 +1,7 @@
 import RenderGraph from "../rendergraph";
 import MediaNode from "./medianode";
 import Hls from "hls.js";
+import { SOURCENODESTATE } from "./sourcenode";
 
 const TYPE = "HLSNode";
 
@@ -82,6 +83,21 @@ export class HLSNode extends MediaNode {
             this._hlsLoading = true;
         }
         super._load();
+    }
+
+    _isReady() {
+        if (this._state === SOURCENODESTATE.sequenced || this._state === SOURCENODESTATE.waiting) {
+            return true;
+        }
+
+        if (
+            this._state === SOURCENODESTATE.playing ||
+            this._state === SOURCENODESTATE.paused ||
+            this._state === SOURCENODESTATE.error
+        ) {
+            return this._ready;
+        }
+        return true;
     }
 
     _unload() {
