@@ -955,9 +955,8 @@ export default class VideoContext {
             // has content to play, this is to avoid the issue when player
             // pauses when loading future nodes.
             const shouldCheckNode =
-                this._state === VideoContext.STATE.PLAYING && sourceNode instanceof MediaNode
-                    ? sourceNode._isElementPlaying
-                    : true;
+                this._state === VideoContext.STATE.PLAYING &&
+                sourceNode.state === SOURCENODESTATE.playing;
             if (!sourceNode._isReady() && shouldCheckNode) {
                 return true;
             }
@@ -1063,8 +1062,9 @@ export default class VideoContext {
                 let sourceNode = this._sourceNodes[i];
 
                 if (this._state === VideoContext.STATE.STALLED) {
-                    if (sourceNode._isReady() && sourceNode._state === SOURCENODESTATE.playing)
+                    if (sourceNode._isReady() && sourceNode._state === SOURCENODESTATE.playing) {
                         sourceNode._pause();
+                    }
                 }
                 if (this._state === VideoContext.STATE.PAUSED) {
                     sourceNode._pause();
