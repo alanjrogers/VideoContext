@@ -266,7 +266,7 @@ class MediaNode extends SourceNode {
         }
 
         if (
-            this._startTime - this._currentTime <= this._preloadTime &&
+            this._startTime - this._currentTime <= this._preloadTime * this._playbackRate &&
             this._state !== SOURCENODESTATE.waiting &&
             this._state !== SOURCENODESTATE.ended
         )
