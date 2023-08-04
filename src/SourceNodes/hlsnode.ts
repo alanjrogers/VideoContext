@@ -90,13 +90,10 @@ export class HLSNode extends MediaNode {
             return true;
         }
 
-        if (
-            this._state === SOURCENODESTATE.playing ||
-            this._state === SOURCENODESTATE.paused ||
-            this._state === SOURCENODESTATE.error
-        ) {
-            return this._ready;
+        if (this._isElementPlaying) {
+            return super._isReady();
         }
+
         return true;
     }
 
