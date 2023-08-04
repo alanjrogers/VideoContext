@@ -599,6 +599,7 @@ export default class VideoContext {
             duration,
             debug
         );
+        hlsNode.volume = this._volume;
         this._sourceNodes.push(hlsNode);
         return hlsNode;
     }
@@ -952,6 +953,7 @@ export default class VideoContext {
         for (let i = 0; i < this._sourceNodes.length; i++) {
             let sourceNode = this._sourceNodes[i];
             if (!sourceNode._isReady()) {
+                console.debug("Playback stalled on sourceNode ", sourceNode._id);
                 return true;
             }
         }
