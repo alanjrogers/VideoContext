@@ -28,6 +28,10 @@ import GraphNode from "./graphnode";
 import MediaNode from "./SourceNodes/medianode";
 import HLSNode from "./SourceNodes/hlsnode";
 
+// Extra exports for debugging
+export { SourceNode } from "./SourceNodes/sourcenode";
+export { HLSNode } from "./SourceNodes/hlsnode";
+
 let updateablesManager = new UpdateablesManager();
 
 interface TimelineCallback {
@@ -595,6 +599,7 @@ export default class VideoContext {
             duration,
             debug
         );
+        hlsNode.volume = this._volume;
         this._sourceNodes.push(hlsNode);
         return hlsNode;
     }
@@ -947,14 +952,7 @@ export default class VideoContext {
     _isStalled() {
         for (let i = 0; i < this._sourceNodes.length; i++) {
             let sourceNode = this._sourceNodes[i];
-            // when video is playing only check if current playing node
-            // has content to play, this is to avoid the issue when player
-            // pauses when loading future nodes.
-            const shouldCheckNode =
-                this._state === VideoContext.STATE.PLAYING && sourceNode instanceof MediaNode
-                    ? sourceNode._isElementPlaying
-                    : true;
-            if (!sourceNode._isReady() && shouldCheckNode) {
+            if (!sourceNode._isReady()) {
                 return true;
             }
         }
@@ -1059,8 +1057,9 @@ export default class VideoContext {
                 let sourceNode = this._sourceNodes[i];
 
                 if (this._state === VideoContext.STATE.STALLED) {
-                    if (sourceNode._isReady() && sourceNode._state === SOURCENODESTATE.playing)
+                    if (sourceNode._isReady() && sourceNode._state === SOURCENODESTATE.playing) {
                         sourceNode._pause();
+                    }
                 }
                 if (this._state === VideoContext.STATE.PAUSED) {
                     sourceNode._pause();

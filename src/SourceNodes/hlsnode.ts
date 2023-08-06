@@ -1,12 +1,13 @@
 import RenderGraph from "../rendergraph";
 import MediaNode from "./medianode";
 import Hls from "hls.js";
+import { SOURCENODESTATE } from "./sourcenode";
 
 const TYPE = "HLSNode";
 
 const DEFAULT_MAX_BUFFER_LENGTH = 30; // seconds
 
-class HLSNode extends MediaNode {
+export class HLSNode extends MediaNode {
     _hls: Hls;
     _src: string;
     _loaded: boolean;
@@ -69,6 +70,7 @@ class HLSNode extends MediaNode {
             // Create a video element.
             const video = document.createElement("video");
             video.id = this._id;
+            video.volume = this._attributes.volume!;
             this._hls.attachMedia(video);
             this._hls.loadSource(this._src);
             this._element = video;
@@ -81,6 +83,18 @@ class HLSNode extends MediaNode {
             this._hlsLoading = true;
         }
         super._load();
+    }
+
+    _isReady() {
+        if (this._state === SOURCENODESTATE.sequenced || this._state === SOURCENODESTATE.waiting) {
+            return true;
+        }
+
+        if (this._isElementPlaying) {
+            return super._isReady();
+        }
+
+        return true;
     }
 
     _unload() {

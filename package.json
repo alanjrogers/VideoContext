@@ -1,6 +1,6 @@
 {
   "name": "videocontext",
-  "version": "0.57.0",
+  "version": "0.57.3",
   "description": "A WebGL & HTML5 graph based video composition library",
   "repository": {
     "type": "git",
@@ -71,6 +71,7 @@
     "eslint-plugin-cypress": "^2.2.0",
     "eslint-webpack-plugin": "^4.0.0",
     "generate-changelog": "^1.7.1",
+    "hls.js": "^1.4.1",
     "husky": "^0.14.3",
     "jest": "^29.5.0",
     "jest-cli": "^29.5.0",
@@ -86,8 +87,7 @@
     "typescript": "^5.0.2",
     "webgl-mock": "^0.1.7",
     "webpack": "^5.75.0",
-    "webpack-cli": "^5.0.0",
-    "hls.js": "^1.4.1"
+    "webpack-cli": "^5.0.0"
   },
   "files": [
     "dist"
