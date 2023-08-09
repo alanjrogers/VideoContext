@@ -89,8 +89,10 @@ export class HLSNode extends MediaNode {
         if (this._state === SOURCENODESTATE.sequenced || this._state === SOURCENODESTATE.waiting) {
             return true;
         }
+        const isActiveNode =
+            this._currentTime <= this._stopTime && this._currentTime >= this._startTime;
 
-        if (this._isElementPlaying) {
+        if (isActiveNode) {
             return super._isReady();
         }
 
