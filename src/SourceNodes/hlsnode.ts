@@ -77,12 +77,12 @@ export class HLSNode extends MediaNode {
 
             this._loaded = true;
             this._hlsLoading = true;
-            this._hls.startLevel = this._hls.levels.length - 1;
         } else if (!this._hlsLoading) {
             this._hls.loadSource(this._src);
             this._hlsLoading = true;
         }
         super._load();
+        this._hls.startLevel = this._hls.levels.length - 1;
     }
 
     _isReady() {
