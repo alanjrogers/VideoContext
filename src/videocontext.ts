@@ -31,6 +31,7 @@ import HLSNode from "./SourceNodes/hlsnode";
 // Extra exports for debugging
 export { SourceNode } from "./SourceNodes/sourcenode";
 export { HLSNode } from "./SourceNodes/hlsnode";
+export * from "./utils";
 
 let updateablesManager = new UpdateablesManager();
 
