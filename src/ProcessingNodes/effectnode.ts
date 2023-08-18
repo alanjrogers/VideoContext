@@ -69,6 +69,6 @@ class EffectNode extends ProcessingNode {
     }
 }
 
-export { TYPE as EFFECTYPE };
+export { TYPE as EFFECTTYPE };
 
 export default EffectNode;

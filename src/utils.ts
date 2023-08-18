@@ -11,6 +11,8 @@ import VideoContext from "./videocontext";
 import GraphNode from "./graphnode";
 import MediaNode from "./SourceNodes/medianode";
 import ProcessingNode from "./ProcessingNodes/processingnode";
+import { HLSTYPE } from "./SourceNodes/hlsnode";
+import { EFFECTTYPE } from "./ProcessingNodes/effectnode";
 
 /*
  * Utility function to compile a WebGL Vertex or Fragment shader.
@@ -589,9 +591,12 @@ export function visualiseVideoContextGraph(videoContext: VideoContext, canvas: H
     for (let node of nodeDepths.keys()) {
         let pos = calculateNodePos(node, nodeDepths, xStep, nodeHeight);
         let color = "#AA9639";
+        let textColor = "#000";
         let text = "";
         if (node.displayName === COMPOSITINGTYPE) {
             color = "#000000";
+            text = "Compositing";
+            textColor = "#fff";
         }
         if (node.displayName === DESTINATIONTYPE) {
             color = "#7D9F35";
@@ -601,6 +606,16 @@ export function visualiseVideoContextGraph(videoContext: VideoContext, canvas: H
             color = "#572A72";
             text = "Video";
         }
+        if (node.displayName === HLSTYPE) {
+            color = "#9473D8";
+            text = "HLS Video";
+        }
+
+        if (node.displayName === EFFECTTYPE) {
+            color = "#D3D3D3";
+            text = "Effect";
+        }
+
         if (node.displayName === CANVASTYPE) {
             color = "#572A72";
             text = "Canvas";
@@ -614,7 +629,7 @@ export function visualiseVideoContextGraph(videoContext: VideoContext, canvas: H
         ctx.fillRect(pos.x, pos.y, nodeWidth, nodeHeight);
         ctx.fill();
 
-        ctx.fillStyle = "#000";
+        ctx.fillStyle = textColor;
         ctx.textAlign = "center";
         ctx.font = "10px Arial";
         ctx.fillText(text, pos.x + nodeWidth / 2, pos.y + nodeHeight / 2 + 2.5);
