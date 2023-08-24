@@ -56,7 +56,8 @@ export class HLSNode extends MediaNode {
             backBufferLength: duration
         });
 
-        this._hls.on(Hls.Events.MANIFEST_LOADED, () => {
+        // LEVEL_LOADED is fired when a level playlist loading finishes - data: { details : levelDetails object, level : id of loaded level, stats : LoaderStats }
+        this._hls.on(Hls.Events.LEVEL_LOADED, () => {
             this._hls.startLevel = this._hls.levels.length - 1;
             this._hls.currentLevel = this._hls.levels.length - 1;
         });
@@ -121,7 +122,7 @@ export class HLSNode extends MediaNode {
         this._hlsLoading = false;
 
         if (this._hls) {
-            this._hls.off(Hls.Events.MANIFEST_LOADED);
+            this._hls.off(Hls.Events.LEVEL_LOADED);
             this._hls.destroy();
         }
         super.destroy();
