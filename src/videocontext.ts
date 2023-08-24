@@ -150,7 +150,7 @@ export default class VideoContext {
         this._renderNodeOnDemandOnly = renderNodeOnDemandOnly;
 
         this._gl = canvas.getContext(
-            "webgl",
+            "experimental-webgl",
             Object.assign(
                 { preserveDrawingBuffer: true }, // can be overriden
                 webglContextAttributes,
