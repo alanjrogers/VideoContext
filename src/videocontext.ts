@@ -31,6 +31,7 @@ import HLSNode from "./SourceNodes/hlsnode";
 // Extra exports for debugging
 export { SourceNode } from "./SourceNodes/sourcenode";
 export { HLSNode } from "./SourceNodes/hlsnode";
+export * from "./utils";
 
 let updateablesManager = new UpdateablesManager();
 
@@ -149,7 +150,7 @@ export default class VideoContext {
         this._renderNodeOnDemandOnly = renderNodeOnDemandOnly;
 
         this._gl = canvas.getContext(
-            "experimental-webgl",
+            "webgl",
             Object.assign(
                 { preserveDrawingBuffer: true }, // can be overriden
                 webglContextAttributes,
