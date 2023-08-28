@@ -28,7 +28,7 @@ export abstract class SourceNode extends GraphNode {
     _ready: boolean;
     _loadCalled: boolean;
     _stretchPaused: boolean;
-    _texture: WebGLTexture;
+    _texture: WebGLTexture | null;
     _callbacks: Array<{ type: string; func: Function }>;
     _renderPaused: boolean;
     /**
@@ -333,14 +333,18 @@ export abstract class SourceNode extends GraphNode {
 
         if (this._state === STATE.waiting) return;
         if (time < this._startTime) {
-            clearTexture(this._gl, this._texture);
+            if (this._texture !== null) {
+                clearTexture(this._gl, this._texture);
+            }
             this._state = STATE.sequenced;
         }
         if (time >= this._startTime && this._state !== STATE.paused) {
             this._state = STATE.playing;
         }
         if (time >= this._stopTime) {
-            clearTexture(this._gl, this._texture);
+            if (this._texture !== null) {
+                clearTexture(this._gl, this._texture);
+            }
             this._triggerCallbacks("ended");
             this._state = STATE.ended;
         }
@@ -394,7 +398,9 @@ export abstract class SourceNode extends GraphNode {
         this._triggerCallbacks("render", currentTime);
 
         if (currentTime < this._startTime) {
-            clearTexture(this._gl, this._texture);
+            if (this._texture !== null) {
+                clearTexture(this._gl, this._texture);
+            }
             this._state = STATE.sequenced;
         }
 
@@ -408,7 +414,9 @@ export abstract class SourceNode extends GraphNode {
         }
 
         if (currentTime >= this._stopTime) {
-            clearTexture(this._gl, this._texture);
+            if (this._texture !== null) {
+                clearTexture(this._gl, this._texture);
+            }
             this._triggerCallbacks("ended");
             this._state = STATE.ended;
         }
@@ -417,11 +425,13 @@ export abstract class SourceNode extends GraphNode {
         if (this._element === undefined || this._ready === false) return true;
 
         if ((!this._renderPaused && this._state === STATE.paused) || this._needsRender) {
-            if (triggerTextureUpdate) updateTexture(this._gl, this._texture, this._element as any);
+            if (triggerTextureUpdate && this._texture !== null)
+                updateTexture(this._gl, this._texture, this._element as any);
             this._renderPaused = true;
         }
         if (this._state === STATE.playing) {
-            if (triggerTextureUpdate) updateTexture(this._gl, this._texture, this._element as any);
+            if (triggerTextureUpdate && this._texture !== null)
+                updateTexture(this._gl, this._texture, this._element as any);
             if (this._stretchPaused) {
                 this._stopTime += timeDelta;
             }
@@ -454,8 +464,10 @@ export abstract class SourceNode extends GraphNode {
         this._stopTime = Infinity;
         this._ready = false;
         this._loadCalled = false;
-        this._gl.deleteTexture(this._texture);
-        this._texture = undefined!;
+        if (this._texture !== null) {
+            this._gl.deleteTexture(this._texture);
+            this._texture = null;
+        }
     }
 }
 

@@ -33,12 +33,13 @@ export class HLSNode extends MediaNode {
             currentTime,
             globalPlaybackRate,
             sourceOffset,
-            preloadTime
+            preloadTime,
+            undefined
         );
 
         this._duration = duration;
         // setting up the max buffer to match the duration of the clip
-        // to avoid preloading to much sections of the video
+        // to avoid preloading to much sections of the media
         // when calling _load and improve performance
         const maxBufferLength =
             duration === undefined
@@ -71,15 +72,16 @@ export class HLSNode extends MediaNode {
         this._elementType = "hls";
     }
 
+    _createElement() {
+        // Subclasses of this node will implement this.
+        throw new Error("Error - HLSNode does not implement _createElement");
+    }
+
     _load() {
         if (!this._loaded) {
-            // Create a video element.
-            const video = document.createElement("video");
-            video.id = this._id;
-            video.volume = this._attributes.volume!;
-            this._hls.attachMedia(video);
+            this._createElement();
+            this._hls.attachMedia(this._element!);
             this._hls.loadSource(this._src);
-            this._element = video;
 
             this._loaded = true;
             this._hlsLoading = true;
