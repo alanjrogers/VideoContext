@@ -69,7 +69,6 @@ export class HLSNode extends MediaNode {
         this._elementURL = src;
         this._loaded = false;
         this._displayName = TYPE;
-        this._elementType = "hls";
     }
 
     _createElement() {
