@@ -27,10 +27,13 @@ import ProcessingNode from "./ProcessingNodes/processingnode";
 import GraphNode from "./graphnode";
 import MediaNode from "./SourceNodes/medianode";
 import HLSNode from "./SourceNodes/hlsnode";
+import HLSVideoNode from "./SourceNodes/hlsvideonode";
+import HLSAudioNode from "./SourceNodes/hlsaudionode";
 
 // Extra exports for debugging
 export { SourceNode } from "./SourceNodes/sourcenode";
-export { HLSNode } from "./SourceNodes/hlsnode";
+export { HLSVideoNode } from "./SourceNodes/hlsvideonode";
+export { HLSAudioNode } from "./SourceNodes/hlsaudionode";
 export * from "./utils";
 
 let updateablesManager = new UpdateablesManager();
@@ -565,7 +568,7 @@ export default class VideoContext {
     }
 
     /**
-     * Create a new node representing a HLS source
+     * Create a new node representing a HLS video source
      *
      * @param {string} [id] - The id of the node used mostly for debugging.
      * @param {string} [src] - The hls stream URL to create the video from.
@@ -578,9 +581,9 @@ export default class VideoContext {
      * @example
      * var canvasElement = document.getElementById("canvas");
      * var ctx = new VideoContext(canvasElement);
-     * var videoNode = ctx.hls("test", "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8");
+     * var videoNode = ctx.hlsVideo("test", "https://test-streams.mux.dev/x36xhzz/x36xhzz.m3u8");
      */
-    hls(
+    hlsVideo(
         id: string,
         src: string,
         duration?: number,
@@ -588,7 +591,48 @@ export default class VideoContext {
         preloadTime: number = 4,
         debug: boolean = false
     ): HLSNode {
-        let hlsNode = new HLSNode(
+        const hlsNode = new HLSVideoNode(
+            id,
+            src,
+            this._gl,
+            this._renderGraph,
+            this._currentTime,
+            this._playbackRate,
+            sourceOffset,
+            preloadTime,
+            duration,
+            debug
+        );
+        hlsNode.volume = this._volume;
+        this._sourceNodes.push(hlsNode);
+        return hlsNode;
+    }
+
+    /**
+     * Create a new node representing a HLS audio source
+     *
+     * @param {string} [id] - The id of the node used mostly for debugging.
+     * @param {string} [src] - The hls stream URL to create the video from.
+     * @param {number} [duration=undefiend] - The duration of the hls srouce (may be less than the actual audio length)
+     *                              the node will prevent loading beyond this time. If undefined it will not be limited.
+     * @param {number} [sourceOffset=0] - Offset into the start of the source audio to start playing from.
+     * @param {number} [preloadTime=4] - How many seconds before the video is to be played to start loading it.
+     * @return {HLSNode} A new HLSNode.
+     *
+     * @example
+     * var canvasElement = document.getElementById("canvas");
+     * var ctx = new VideoContext(canvasElement);
+     * var videoNode = ctx.hlsAudio("test", "https://pl.streamingvideoprovider.com/mp3-playlist/playlist.m3u8");
+     */
+    hlsAudio(
+        id: string,
+        src: string,
+        duration?: number,
+        sourceOffset: number = 0,
+        preloadTime: number = 4,
+        debug: boolean = false
+    ): HLSNode {
+        const hlsNode = new HLSAudioNode(
             id,
             src,
             this._gl,
@@ -640,21 +684,6 @@ export default class VideoContext {
     }
 
     /**
-     * @deprecated
-     */
-    createVideoSourceNode(
-        src: Parameters<this["video"]>[0],
-        sourceOffset = 0,
-        preloadTime = 4,
-        videoElementAttributes = {}
-    ) {
-        this._deprecate(
-            "Warning: createVideoSourceNode will be deprecated in v1.0, please switch to using VideoContext.video()"
-        );
-        return this.video(src, sourceOffset, preloadTime, videoElementAttributes);
-    }
-
-    /**
      * Create a new node representing an image source
      * @param {string|HTMLImageElement|ImageBitmap} src - The url or image element to create the image node from.
      * @param {number} [preloadTime=4] - How long before a node is to be displayed to attmept to load it.
@@ -690,22 +719,6 @@ export default class VideoContext {
     }
 
     /**
-     * @deprecated
-     */
-    createImageSourceNode(
-        src: Parameters<this["image"]>[0],
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        _sourceOffset = 0,
-        preloadTime = 4,
-        imageElementAttributes = {}
-    ) {
-        this._deprecate(
-            "Warning: createImageSourceNode will be deprecated in v1.0, please switch to using VideoContext.image()"
-        );
-        return this.image(src, preloadTime, imageElementAttributes);
-    }
-
-    /**
      * Create a new node representing a canvas source
      * @param {Canvas} src - The canvas element to create the canvas node from.
      * @return {CanvasNode} A new canvas node.
@@ -717,17 +730,6 @@ export default class VideoContext {
     }
 
     /**
-     * @deprecated
-     */
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    createCanvasSourceNode(canvas: HTMLCanvasElement, _sourceOffset = 0, _preloadTime = 4) {
-        this._deprecate(
-            "Warning: createCanvasSourceNode will be deprecated in v1.0, please switch to using VideoContext.canvas()"
-        );
-        return this.canvas(canvas);
-    }
-
-    /**
      * Create a new effect node.
      * @param {IDefinition} definition - this is an object defining the shaders, inputs, and properties of the compositing node to create. Builtin definitions can be found by accessing VideoContext.DEFINITIONS.
      * @return {EffectNode} A new effect node created from the passed definition
@@ -736,16 +738,6 @@ export default class VideoContext {
         let effectNode = new EffectNode(this._gl, this._renderGraph, definition);
         this._processingNodes.push(effectNode);
         return effectNode;
-    }
-
-    /**
-     * @deprecated
-     */
-    createEffectNode(definition: IDefinition) {
-        this._deprecate(
-            "Warning: createEffectNode will be deprecated in v1.0, please switch to using VideoContext.effect()"
-        );
-        return this.effect(definition);
     }
 
     /**
@@ -940,19 +932,9 @@ export default class VideoContext {
         return transitionNode;
     }
 
-    /**
-     * @deprecated
-     */
-    createTransitionNode(definition: IDefinition) {
-        this._deprecate(
-            "Warning: createTransitionNode will be deprecated in v1.0, please switch to using VideoContext.transition()"
-        );
-        return this.transition(definition);
-    }
-
     _isStalled() {
         for (let i = 0; i < this._sourceNodes.length; i++) {
-            let sourceNode = this._sourceNodes[i];
+            const sourceNode = this._sourceNodes[i];
             if (!sourceNode._isReady()) {
                 return true;
             }

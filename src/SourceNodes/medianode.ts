@@ -21,7 +21,7 @@ class MediaNode extends SourceNode {
     _attributes: Partial<GetNonFunctionPartialOfType<HTMLMediaElement>>;
     _loopElement: boolean;
     _isElementPlaying: boolean;
-    _element: HTMLVideoElement | HTMLAudioElement | HTMLAudioElement | undefined;
+    _element: HTMLVideoElement | HTMLAudioElement | undefined;
     _loadTriggered: boolean | undefined;
     /**
      * Initialise an instance of a MediaNode.

@@ -13,7 +13,7 @@ class CompositingNode extends ProcessingNode {
      * Initialise an instance of a Compositing Node. You should not instantiate this directly, but use VideoContest.createCompositingNode().
      */
     constructor(gl: WebGLRenderingContext, renderGraph: RenderGraph, definition: IDefinition) {
-        let placeholderTexture = createElementTexture(gl);
+        const placeholderTexture = createElementTexture(gl);
         gl.texImage2D(
             gl.TEXTURE_2D,
             0,

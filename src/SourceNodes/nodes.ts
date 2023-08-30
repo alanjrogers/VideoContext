@@ -4,7 +4,8 @@ import ImageNode from "./imagenode";
 import MediaNode from "./medianode";
 import SourceNode from "./sourcenode";
 import VideoNode from "./videonode";
-import HLSNode from "./hlsnode";
+import HLSAudioNode from "./hlsaudionode";
+import HLSVideoNode from "./hlsvideonode";
 
 const NODES = {
     AudioNode,
@@ -13,7 +14,8 @@ const NODES = {
     MediaNode,
     SourceNode,
     VideoNode,
-    HLSNode
+    HLSAudioNode,
+    HLSVideoNode
 };
 
 export default NODES;
