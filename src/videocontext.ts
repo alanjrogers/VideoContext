@@ -32,8 +32,8 @@ import HLSAudioNode from "./SourceNodes/hlsaudionode";
 
 // Extra exports for debugging
 export { SourceNode } from "./SourceNodes/sourcenode";
-export * from "./SourceNodes/hlsvideonode";
-export * from "./SourceNodes/hlsaudionode";
+export { HLSVideoNode } from "./SourceNodes/hlsvideonode";
+export { HLSAudioNode } from "./SourceNodes/hlsaudionode";
 export * from "./utils";
 
 let updateablesManager = new UpdateablesManager();

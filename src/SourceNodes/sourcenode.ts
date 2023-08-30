@@ -425,13 +425,15 @@ export abstract class SourceNode extends GraphNode {
         if (this._element === undefined || this._ready === false) return true;
 
         if ((!this._renderPaused && this._state === STATE.paused) || this._needsRender) {
-            if (triggerTextureUpdate && this._texture !== null)
+            if (triggerTextureUpdate && this._texture !== null) {
                 updateTexture(this._gl, this._texture, this._element as any);
+            }
             this._renderPaused = true;
         }
         if (this._state === STATE.playing) {
-            if (triggerTextureUpdate && this._texture !== null)
+            if (triggerTextureUpdate && this._texture !== null) {
                 updateTexture(this._gl, this._texture, this._element as any);
+            }
             if (this._stretchPaused) {
                 this._stopTime += timeDelta;
             }

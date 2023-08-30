@@ -2,7 +2,7 @@ import HLSNode from "./hlsnode";
 
 const TYPE = "HLSAudioNode";
 
-class HLSAudioNode extends HLSNode {
+export class HLSAudioNode extends HLSNode {
     /**
      * Initialise an instance of a VideoNode.
      * This should not be called directly, but created through a call to videoContext.hlsAudio();
