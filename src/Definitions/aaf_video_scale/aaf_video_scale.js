@@ -8,7 +8,8 @@ let aaf_video_scale = {
     fragmentShader,
     properties: {
         scaleX: { type: "uniform", value: 1.0 },
-        scaleY: { type: "uniform", value: 1.0 }
+        scaleY: { type: "uniform", value: 1.0 },
+        bColor: { type: "uniform", value: [0.0, 0.0, 0.0, 0.0]}
     },
     inputs: ["u_image"]
 };
