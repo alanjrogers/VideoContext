@@ -187,7 +187,10 @@ class MediaNode extends SourceNode {
          * it gets called a lot of time
          */
         if (shouldPollForElementReadyState) {
-            if (this._element!.readyState > 3 && !this._element!.seeking) {
+            if (
+                this._element!.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA &&
+                !this._element!.seeking
+            ) {
                 // at this point the element has enough data for current playback position
                 // and at least a couple of frames into the future
 
