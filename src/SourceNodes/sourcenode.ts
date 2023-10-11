@@ -37,7 +37,7 @@ export abstract class SourceNode extends GraphNode {
      */
     constructor(
         src: any,
-        gl: WebGLRenderingContext,
+        gl: WebGL2RenderingContext,
         renderGraph: RenderGraph,
         currentTime: number
     ) {

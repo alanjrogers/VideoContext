@@ -9,7 +9,7 @@ class GraphNode {
     _inputNames: string[];
     _renderGraph: RenderGraph;
     _destroyed: boolean;
-    _gl: WebGLRenderingContext;
+    _gl: WebGL2RenderingContext;
     _rendered: boolean;
     _displayName: string;
     _needsRender: boolean;
@@ -17,7 +17,7 @@ class GraphNode {
      * Base class from which all processing and source nodes are derrived.
      */
     constructor(
-        gl: WebGLRenderingContext,
+        gl: WebGL2RenderingContext,
         renderGraph: RenderGraph,
         inputNames: string[],
         limitConnections = false

@@ -29,7 +29,7 @@ class MediaNode extends SourceNode {
      */
     constructor(
         src: any,
-        gl: WebGLRenderingContext,
+        gl: WebGL2RenderingContext,
         renderGraph: RenderGraph,
         currentTime: number,
         globalPlaybackRate = 1.0,

@@ -17,7 +17,7 @@ export class HLSNode extends MediaNode {
     constructor(
         id: string,
         src: string,
-        gl: WebGLRenderingContext,
+        gl: WebGL2RenderingContext,
         renderGraph: RenderGraph,
         currentTime: number,
         globalPlaybackRate = 1.0,

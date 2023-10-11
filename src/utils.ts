@@ -17,14 +17,18 @@ import { EFFECTTYPE } from "./ProcessingNodes/effectnode";
 /*
  * Utility function to compile a WebGL Vertex or Fragment shader.
  *
- * @param {WebGLRenderingContext} gl - the webgl context fo which to build the shader.
+ * @param {WebGL2RenderingContext} gl - the webgl context fo which to build the shader.
  * @param {String} shaderSource - A string of shader code to compile.
- * @param {number} shaderType - Shader type, either WebGLRenderingContext.VERTEX_SHADER or WebGLRenderingContext.FRAGMENT_SHADER.
+ * @param {number} shaderType - Shader type, either WebGL2RenderingContext.VERTEX_SHADER or WebGL2RenderingContext.FRAGMENT_SHADER.
  *
  * @return {WebGLShader} A compiled shader.
  *
  */
-export function compileShader(gl: WebGLRenderingContext, shaderSource: string, shaderType: number) {
+export function compileShader(
+    gl: WebGL2RenderingContext,
+    shaderSource: string,
+    shaderType: number
+) {
     let shader = gl.createShader(shaderType)!;
     gl.shaderSource(shader, shaderSource);
     gl.compileShader(shader);
@@ -38,14 +42,14 @@ export function compileShader(gl: WebGLRenderingContext, shaderSource: string, s
 /*
  * Create a shader program from a passed vertex and fragment shader source string.
  *
- * @param {WebGLRenderingContext} gl - the webgl context fo which to build the shader.
+ * @param {WebGL2RenderingContext} gl - the webgl context fo which to build the shader.
  * @param {WebGLShader} vertexShader - A compiled vertex shader.
  * @param {WebGLShader} fragmentShader - A compiled fragment shader.
  *
  * @return {WebGLProgram} A compiled & linkde shader program.
  */
 export function createShaderProgram(
-    gl: WebGLRenderingContext,
+    gl: WebGL2RenderingContext,
     vertexShader: WebGLShader,
     fragmentShader: WebGLShader
 ) {
@@ -67,8 +71,8 @@ export function createShaderProgram(
     return program;
 }
 
-export function createElementTexture(gl: WebGLRenderingContext) {
-    let texture = gl.createTexture();
+export function createElementTexture(gl: WebGL2RenderingContext) {
+    const texture = gl.createTexture();
     gl.bindTexture(gl.TEXTURE_2D, texture);
     gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
     // Set the parameters so we can render any size image.
@@ -76,14 +80,14 @@ export function createElementTexture(gl: WebGLRenderingContext) {
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
-    //Initialise the texture untit to clear.
+    //Initialise the texture unit to clear.
     //gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0, gl.RGBA, gl.UNSIGNED_BYTE, type);
 
     return texture;
 }
 
 export function updateTexture(
-    gl: WebGLRenderingContext,
+    gl: WebGL2RenderingContext,
     texture: WebGLTexture,
     element: HTMLImageElement | ImageBitmap | HTMLCanvasElement | HTMLVideoElement
 ) {
@@ -99,7 +103,7 @@ export function updateTexture(
     texture._isTextureCleared = false;
 }
 
-export function clearTexture(gl: WebGLRenderingContext, texture: WebGLTexture) {
+export function clearTexture(gl: WebGL2RenderingContext, texture: WebGLTexture) {
     // A quick check to ensure we don't call 'texImage2D' when the texture has already been 'cleared' #performance
     if (!texture._isTextureCleared) {
         gl.bindTexture(gl.TEXTURE_2D, texture);

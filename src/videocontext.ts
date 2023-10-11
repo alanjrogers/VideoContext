@@ -95,7 +95,7 @@ export default class VideoContext {
 
     _canvas: HTMLCanvasElement;
     _endOnLastSourceEnd: boolean;
-    _gl: WebGLRenderingContext;
+    _gl: WebGL2RenderingContext;
     _useVideoElementCache!: boolean;
     _videoElementCache!: VideoElementCache;
     _id!: string;
@@ -153,13 +153,13 @@ export default class VideoContext {
         this._renderNodeOnDemandOnly = renderNodeOnDemandOnly;
 
         this._gl = canvas.getContext(
-            "experimental-webgl",
+            "webgl2",
             Object.assign(
                 { preserveDrawingBuffer: true }, // can be overriden
                 webglContextAttributes,
-                { alpha: false } // Can't be overriden because it is copied last
+                { alpha: true } // Can't be overriden because it is copied last
             )
-        ) as WebGLRenderingContext;
+        ) as WebGL2RenderingContext;
         if (this._gl === null) {
             console.error("Failed to intialise WebGL.");
             if (initErrorCallback) initErrorCallback();
@@ -505,6 +505,7 @@ export default class VideoContext {
      * ctx.play();
      */
     play() {
+        if (this._state === VideoContext.STATE.PLAYING) return false;
         console.debug("VideoContext - playing");
         //Initialise the video element cache
         if (this._videoElementCache) this._videoElementCache.init();
@@ -527,9 +528,15 @@ export default class VideoContext {
      * setTimeout(() => ctx.pause(), 1000); //pause playback after roughly one second.
      */
     pause() {
+        if (this._state === VideoContext.STATE.PAUSED) return false;
+
         console.debug("VideoContext - pausing");
         this._state = VideoContext.STATE.PAUSED;
         return true;
+    }
+
+    clearCanvas() {
+        this._gl.clear(this._gl.COLOR_BUFFER_BIT);
     }
 
     /**
@@ -818,7 +825,7 @@ export default class VideoContext {
         CustomSourceNode: {
             new (
                 src: any,
-                gl: WebGLRenderingContext,
+                gl: WebGL2RenderingContext,
                 renderGraph: RenderGraph,
                 currentTime: number,
                 ...args: T

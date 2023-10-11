@@ -11,7 +11,7 @@ class CanvasNode extends SourceNode {
      */
     constructor(
         canvas: HTMLCanvasElement,
-        gl: WebGLRenderingContext,
+        gl: WebGL2RenderingContext,
         renderGraph: RenderGraph,
         currentTime: number,
         preloadTime = 4
