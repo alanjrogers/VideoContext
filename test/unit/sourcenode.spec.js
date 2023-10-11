@@ -13,7 +13,7 @@ const mockRenderGraph = {};
 
 beforeEach(() => {
     const canvas = new HTMLCanvasElement(500, 500);
-    mockGLContext = canvas.getContext("webgl2");
+    mockGLContext = canvas.getContext("webgl");
 });
 
 describe("_update", () => {
