@@ -1164,7 +1164,7 @@ export default class VideoContext {
             if (renderNodes) {
                 this._lastRenderTime = this._currentTime;
             }
-            if (this._state === VideoContext.STATE.SEEKING) {
+            if (this._state === VideoContext.STATE.SEEKING && ready) {
                 this._state = VideoContext.STATE.PAUSED;
                 this._callCallbacks(VideoContext.EVENTS.SEEKED);
             }
