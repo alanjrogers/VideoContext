@@ -55,6 +55,7 @@ export default class VideoContext {
      * @typedef {Object} STATE
      * @property {number} STATE.PLAYING - All sources are active
      * @property {number} STATE.PAUSED - All sources are paused
+     * @property {number} STATE.SEEKING - VideoContext is currently seeking to a new currentTime.
      * @property {number} STATE.STALLED - One or more sources is unable to play
      * @property {number} STATE.ENDED - All sources have finished playing
      * @property {number} STATE.BROKEN - The render graph is in a broken state
@@ -64,21 +65,25 @@ export default class VideoContext {
         PAUSED: 1,
         STALLED: 2,
         ENDED: 3,
-        BROKEN: 4
+        BROKEN: 4,
+        SEEKING: 5
     });
 
     /**
      * Video Context Events
      * @readonly
-     * @typedef {Object} STATE
-     * @property {string} STATE.UPDATE - Called any time a frame is rendered to the screen.
-     * @property {string} STATE.STALLED - happens anytime the playback is stopped due to buffer starvation for playing assets.
-     * @property {string} STATE.ENDED - Called once plackback has finished (i.e ctx.currentTime == ctx.duration).
-     * @property {string} STATE.CONTENT - Called at the start of a time region where there is content playing out of one or more sourceNodes.
-     * @property {number} STATE.NOCONTENT - Called at the start of any time region where the VideoContext is still playing, but there are currently no active playing sources.
+     * @typedef {Object} EVENTS
+     * @property {string} EVENTS.UPDATE - Called any time a frame is rendered to the screen.
+     * @property {string} EVENTS.SEEKING - Called any time the VideoContext starts seeking to a new time.
+     * @property {string} EVENTS.STALLED - happens anytime the playback is stopped due to buffer starvation for playing assets.
+     * @property {string} EVENTS.ENDED - Called once plackback has finished (i.e ctx.currentTime == ctx.duration).
+     * @property {string} EVENTS.CONTENT - Called at the start of a time region where there is content playing out of one or more sourceNodes.
+     * @property {number} EVENTS.NOCONTENT - Called at the start of any time region where the VideoContext is still playing, but there are currently no active playing sources.
      */
     static EVENTS = Object.freeze({
         UPDATE: "update",
+        SEEKING: "seeking",
+        SEEKED: "seeked",
         STALLED: "stalled",
         ENDED: "ended",
         CONTENT: "content",
@@ -186,8 +191,8 @@ export default class VideoContext {
         this._sourceNodes = [];
         this._processingNodes = [];
         this._timeline = [];
-        this._currentTime = 0;
         this._state = VideoContext.STATE.PAUSED;
+        this._currentTime = 0;
         this._playbackRate = 1.0;
         this._volume = 1.0;
         this._sourcesPlaying = undefined;
@@ -347,8 +352,10 @@ export default class VideoContext {
      *
      */
     set currentTime(currentTime) {
-        if (currentTime < this.duration && this._state === VideoContext.STATE.ENDED)
-            this._state = VideoContext.STATE.PAUSED;
+        if (this._state === VideoContext.STATE.PAUSED) {
+            this._state = VideoContext.STATE.SEEKING;
+            this._callCallbacks(VideoContext.EVENTS.SEEKING);
+        }
 
         if (typeof currentTime === "string") {
             currentTime = parseFloat(currentTime);
@@ -361,6 +368,9 @@ export default class VideoContext {
             this._processingNodes[i]._seek(currentTime);
         }
         this._currentTime = currentTime;
+
+        if (currentTime < this.duration && this._state === VideoContext.STATE.ENDED)
+            this._state = VideoContext.STATE.PAUSED;
     }
 
     /**
@@ -528,7 +538,8 @@ export default class VideoContext {
      * setTimeout(() => ctx.pause(), 1000); //pause playback after roughly one second.
      */
     pause() {
-        if (this._state === VideoContext.STATE.PAUSED) return false;
+        if (this._state === VideoContext.STATE.PAUSED || this._state === VideoContext.STATE.SEEKING)
+            return false;
 
         console.debug("VideoContext - pausing");
         this._state = VideoContext.STATE.PAUSED;
@@ -986,11 +997,15 @@ export default class VideoContext {
         if (
             this._state === VideoContext.STATE.PLAYING ||
             this._state === VideoContext.STATE.STALLED ||
-            this._state === VideoContext.STATE.PAUSED
+            this._state === VideoContext.STATE.PAUSED ||
+            this._state === VideoContext.STATE.SEEKING
         ) {
             this._callCallbacks(VideoContext.EVENTS.UPDATE);
 
-            if (this._state !== VideoContext.STATE.PAUSED) {
+            if (
+                this._state !== VideoContext.STATE.PAUSED &&
+                this._state !== VideoContext.STATE.SEEKING
+            ) {
                 if (this._isStalled()) {
                     this._callCallbacks(VideoContext.EVENTS.STALLED);
                     this._state = VideoContext.STATE.STALLED;
@@ -1051,7 +1066,10 @@ export default class VideoContext {
                         sourceNode._pause();
                     }
                 }
-                if (this._state === VideoContext.STATE.PAUSED) {
+                if (
+                    this._state === VideoContext.STATE.PAUSED ||
+                    this._state === VideoContext.STATE.SEEKING
+                ) {
                     sourceNode._pause();
                 }
                 if (this._state === VideoContext.STATE.PLAYING) {
@@ -1112,7 +1130,15 @@ export default class VideoContext {
             const renderNodes =
                 ready && (needsRender || timeChanged) && this._renderNodeOnDemandOnly;
 
+            if (renderNodes) {
+                this._gl.clearColor(0, 0, 0, 0.0);
+                this._gl.clear(this._gl.COLOR_BUFFER_BIT);
+            }
+
             for (let node of sortedNodes) {
+                if (node instanceof DestinationNode) {
+                    continue;
+                }
                 if (renderNodes && (node instanceof SourceNode || node instanceof ProcessingNode)) {
                     node._update(this._currentTime);
                 }
@@ -1120,6 +1146,7 @@ export default class VideoContext {
                     if (
                         !this._renderNodeOnDemandOnly ||
                         this._state === VideoContext.STATE.PLAYING ||
+                        this._state === VideoContext.STATE.SEEKING ||
                         renderNodes
                     ) {
                         (node as ProcessingNode)._update(this._currentTime);
@@ -1130,10 +1157,16 @@ export default class VideoContext {
                     node.needsRender = false;
                 }
             }
+
+            this._destinationNode._render();
             // after nodes are rendered
             // update the previous time
             if (renderNodes) {
                 this._lastRenderTime = this._currentTime;
+            }
+            if (this._state === VideoContext.STATE.SEEKING) {
+                this._state = VideoContext.STATE.PAUSED;
+                this._callCallbacks(VideoContext.EVENTS.SEEKED);
             }
         }
     }
@@ -1157,8 +1190,8 @@ export default class VideoContext {
         this._sourceNodes = [];
         this._processingNodes = [];
         this._timeline = [];
-        this._currentTime = 0;
         this._state = VideoContext.STATE.PAUSED;
+        this._currentTime = 0;
         this._playbackRate = 1.0;
         this._sourcesPlaying = undefined;
         Object.keys(VideoContext.EVENTS).forEach((name) =>

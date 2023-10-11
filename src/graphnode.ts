@@ -10,7 +10,6 @@ class GraphNode {
     _renderGraph: RenderGraph;
     _destroyed: boolean;
     _gl: WebGL2RenderingContext;
-    _rendered: boolean;
     _displayName: string;
     _needsRender: boolean;
     /**
@@ -30,7 +29,6 @@ class GraphNode {
         //Setup WebGL output texture
         this._gl = gl;
         this._renderGraph = renderGraph;
-        this._rendered = false;
         this._displayName = TYPE;
         this._needsRender = false;
     }

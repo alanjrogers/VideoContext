@@ -30,7 +30,6 @@ export abstract class SourceNode extends GraphNode {
     _stretchPaused: boolean;
     _texture: WebGLTexture | null;
     _callbacks: Array<{ type: string; func: Function }>;
-    _renderPaused: boolean;
     /**
      * Initialise an instance of a SourceNode.
      * This is the base class for other Nodes which generate media to be passed into the processing pipeline.
@@ -78,7 +77,6 @@ export abstract class SourceNode extends GraphNode {
             new Uint8Array([0, 0, 0, 0])
         );
         this._callbacks = [];
-        this._renderPaused = false;
         this._displayName = TYPE;
         this._id = generateRandomId();
     }
@@ -327,8 +325,6 @@ export abstract class SourceNode extends GraphNode {
     }
 
     _seek(time: number) {
-        this._renderPaused = false;
-
         this._triggerCallbacks("seek", time);
 
         if (this._state === STATE.waiting) return;
@@ -356,7 +352,6 @@ export abstract class SourceNode extends GraphNode {
         if (this._state === STATE.playing || (this._currentTime === 0 && this._startTime === 0)) {
             this._triggerCallbacks("pause");
             this._state = STATE.paused;
-            this._renderPaused = false;
         }
     }
     _play() {
@@ -381,7 +376,6 @@ export abstract class SourceNode extends GraphNode {
     }
 
     _update(currentTime: number, triggerTextureUpdate = true): boolean | void {
-        this._rendered = true;
         let timeDelta = currentTime - this._currentTime;
 
         //update the current time
@@ -424,11 +418,10 @@ export abstract class SourceNode extends GraphNode {
         //update this source nodes texture
         if (this._element === undefined || this._ready === false) return true;
 
-        if ((!this._renderPaused && this._state === STATE.paused) || this._needsRender) {
+        if (this._state === STATE.paused || this._needsRender) {
             if (triggerTextureUpdate && this._texture !== null) {
                 updateTexture(this._gl, this._texture, this._element as any);
             }
-            this._renderPaused = true;
         }
         if (this._state === STATE.playing) {
             if (triggerTextureUpdate && this._texture !== null) {

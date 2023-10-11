@@ -224,7 +224,6 @@ class ProcessingNode extends GraphNode {
     }
 
     _render() {
-        this._rendered = true;
         let gl = this._gl;
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 
