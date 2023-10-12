@@ -1037,8 +1037,9 @@ export default class VideoContext {
                 this._state !== VideoContext.STATE.PAUSED &&
                 this._state !== VideoContext.STATE.SEEKING
             ) {
+                const wasStalled = this._state === VideoContext.STATE.STALLED;
+
                 if (this._isStalled()) {
-                    const wasStalled = this._state === VideoContext.STATE.STALLED;
                     this._state = VideoContext.STATE.STALLED;
 
                     if (!wasStalled) {
@@ -1046,6 +1047,9 @@ export default class VideoContext {
                     }
                 } else {
                     this._state = VideoContext.STATE.PLAYING;
+                    if (wasStalled) {
+                        this._callCallbacks(VideoContext.EVENTS.PLAYING);
+                    }
                 }
             }
 
