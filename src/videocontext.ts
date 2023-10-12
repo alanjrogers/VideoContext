@@ -530,7 +530,6 @@ export default class VideoContext {
 
         this._callCallbacks(VideoContext.EVENTS.PLAY);
 
-        console.debug("VideoContext - playing");
         //Initialise the video element cache
         if (this._videoElementCache) this._videoElementCache.init();
         // set the state.
@@ -565,8 +564,6 @@ export default class VideoContext {
             return false;
 
         this._callCallbacks(VideoContext.EVENTS.PAUSE);
-
-        console.debug("VideoContext - pausing");
         this._state = VideoContext.STATE.PAUSED;
 
         this._runAfterNextRender = () => {
@@ -1041,8 +1038,12 @@ export default class VideoContext {
                 this._state !== VideoContext.STATE.SEEKING
             ) {
                 if (this._isStalled()) {
+                    const wasStalled = this._state === VideoContext.STATE.STALLED;
                     this._state = VideoContext.STATE.STALLED;
-                    this._callCallbacks(VideoContext.EVENTS.STALLED);
+
+                    if (!wasStalled) {
+                        this._callCallbacks(VideoContext.EVENTS.STALLED);
+                    }
                 } else {
                     this._state = VideoContext.STATE.PLAYING;
                 }
