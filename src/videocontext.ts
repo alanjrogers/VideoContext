@@ -75,6 +75,11 @@ export default class VideoContext {
      * @typedef {Object} EVENTS
      * @property {string} EVENTS.UPDATE - Called any time a frame is rendered to the screen.
      * @property {string} EVENTS.SEEKING - Called any time the VideoContext starts seeking to a new time.
+     * @property {string} EVENTS.SEEKED - Called any time the VideoContext has finished (frame has rendered) seeking to a new time .
+     * @property {string} EVENTS.PLAY - Called any time the VideoContext has been requested to play.
+     * @property {string} EVENTS.PLAYING - Called any time the VideoContext has started playing (state = PLAYING)
+     * @property {string} EVENTS.PAUSE - Called any time the VideoContext has been requested to pause.
+     * @property {string} EVENTS.PAUSED - Called any time the VideoContext has gone into the PAUSED state.
      * @property {string} EVENTS.STALLED - happens anytime the playback is stopped due to buffer starvation for playing assets.
      * @property {string} EVENTS.ENDED - Called once plackback has finished (i.e ctx.currentTime == ctx.duration).
      * @property {string} EVENTS.CONTENT - Called at the start of a time region where there is content playing out of one or more sourceNodes.
@@ -84,6 +89,10 @@ export default class VideoContext {
         UPDATE: "update",
         SEEKING: "seeking",
         SEEKED: "seeked",
+        PLAY: "play",
+        PLAYING: "playing",
+        PAUSE: "pause",
+        PAUSED: "paused",
         STALLED: "stalled",
         ENDED: "ended",
         CONTENT: "content",
@@ -118,6 +127,7 @@ export default class VideoContext {
     _timelineCallbacks!: Array<TimelineCallback>;
     _renderNodeOnDemandOnly: boolean;
     _lastRenderTime: number | undefined;
+    _runAfterNextRender: (() => boolean) | undefined;
     /**
      * Initialise the VideoContext and render to the specific canvas. A 2nd parameter can be passed to the constructor which is a function that get's called if the VideoContext fails to initialise.
      *
@@ -198,6 +208,7 @@ export default class VideoContext {
         this._sourcesPlaying = undefined;
         this._destinationNode = new DestinationNode(this._gl, this._renderGraph);
         this._lastRenderTime = undefined;
+        this._runAfterNextRender = undefined;
 
         this._callbacks = new Map();
         Object.keys(VideoContext.EVENTS).forEach((name) =>
@@ -516,11 +527,23 @@ export default class VideoContext {
      */
     play() {
         if (this._state === VideoContext.STATE.PLAYING) return false;
+
+        this._callCallbacks(VideoContext.EVENTS.PLAY);
+
         console.debug("VideoContext - playing");
         //Initialise the video element cache
         if (this._videoElementCache) this._videoElementCache.init();
         // set the state.
         this._state = VideoContext.STATE.PLAYING;
+
+        this._runAfterNextRender = () => {
+            if (this._state === VideoContext.STATE.PLAYING) {
+                this._callCallbacks(VideoContext.EVENTS.PLAYING);
+                return true;
+            }
+            return false;
+        };
+
         return true;
     }
 
@@ -541,8 +564,19 @@ export default class VideoContext {
         if (this._state === VideoContext.STATE.PAUSED || this._state === VideoContext.STATE.SEEKING)
             return false;
 
+        this._callCallbacks(VideoContext.EVENTS.PAUSE);
+
         console.debug("VideoContext - pausing");
         this._state = VideoContext.STATE.PAUSED;
+
+        this._runAfterNextRender = () => {
+            if (this._state === VideoContext.STATE.PAUSED) {
+                this._callCallbacks(VideoContext.EVENTS.PAUSED);
+                return true;
+            }
+            return false;
+        };
+
         return true;
     }
 
@@ -1007,8 +1041,8 @@ export default class VideoContext {
                 this._state !== VideoContext.STATE.SEEKING
             ) {
                 if (this._isStalled()) {
-                    this._callCallbacks(VideoContext.EVENTS.STALLED);
                     this._state = VideoContext.STATE.STALLED;
+                    this._callCallbacks(VideoContext.EVENTS.STALLED);
                 } else {
                     this._state = VideoContext.STATE.PLAYING;
                 }
@@ -1167,6 +1201,12 @@ export default class VideoContext {
             if (this._state === VideoContext.STATE.SEEKING && ready) {
                 this._state = VideoContext.STATE.PAUSED;
                 this._callCallbacks(VideoContext.EVENTS.SEEKED);
+            }
+            if (this._runAfterNextRender && ready) {
+                if (this._runAfterNextRender()) {
+                    // Remove it if it ran successfully.
+                    this._runAfterNextRender = undefined;
+                }
             }
         }
     }
