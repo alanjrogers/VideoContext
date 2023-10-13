@@ -20,7 +20,6 @@ class MediaNode extends SourceNode {
     _playbackRate: number;
     _attributes: Partial<GetNonFunctionPartialOfType<HTMLMediaElement>>;
     _loopElement: boolean;
-    _isElementPlaying: boolean;
     _element: HTMLVideoElement | HTMLAudioElement | undefined;
     _loadTriggered: boolean | undefined;
     /**
@@ -47,7 +46,6 @@ class MediaNode extends SourceNode {
         this._playbackRateUpdated = true;
         this._attributes = Object.assign({ volume: 1.0 }, attributes);
         this._loopElement = false;
-        this._isElementPlaying = false;
         if (this._attributes.loop) {
             this._loopElement = this._attributes.loop;
         }
@@ -64,7 +62,7 @@ class MediaNode extends SourceNode {
             if (this._stretchPaused) {
                 this._element.pause();
             } else {
-                if (this._state === SOURCENODESTATE.playing) {
+                if (this._state === SOURCENODESTATE.playing && !this._isElementPlaying) {
                     this._element.play();
                 }
             }
@@ -81,6 +79,18 @@ class MediaNode extends SourceNode {
 
     get elementURL() {
         return this._elementURL;
+    }
+
+    get _isElementPlaying() {
+        if (this._element === undefined) {
+            return false;
+        }
+        return (
+            this._element.currentTime > 0 &&
+            !this._element.paused &&
+            !this._element.ended &&
+            this._element.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA
+        );
     }
 
     /**
@@ -236,7 +246,6 @@ class MediaNode extends SourceNode {
         }
         // reset class to initial state
         this._ready = false;
-        this._isElementPlaying = false;
         // For completeness. I couldn't find a path that required reuse of this._loadTriggered after _unload.
         this._loadTriggered = false;
     }
@@ -285,12 +294,10 @@ class MediaNode extends SourceNode {
                 if (this._stretchPaused) {
                     this._element!.pause();
                 }
-                this._isElementPlaying = true;
             }
             return true;
         } else if (this._state === SOURCENODESTATE.paused) {
             this._element!.pause();
-            this._isElementPlaying = false;
             return true;
         } else if (this._state === SOURCENODESTATE.ended && this._element !== undefined) {
             this._element.pause();
@@ -305,7 +312,6 @@ class MediaNode extends SourceNode {
         super.clearTimelineState();
         if (this._element !== undefined) {
             this._element.pause();
-            this._isElementPlaying = false;
         }
         this._unload();
     }
