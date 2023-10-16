@@ -31,7 +31,7 @@ class ProcessingNode extends GraphNode {
      * This class is not used directly, but is extended to create CompositingNodes, TransitionNodes, and EffectNodes.
      */
     constructor(
-        gl: WebGLRenderingContext,
+        gl: WebGL2RenderingContext,
         renderGraph: RenderGraph,
         definition: IDefinition,
         inputNames: string[],
@@ -224,7 +224,6 @@ class ProcessingNode extends GraphNode {
     }
 
     _render() {
-        this._rendered = true;
         let gl = this._gl;
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
 

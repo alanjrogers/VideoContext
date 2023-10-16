@@ -14,7 +14,7 @@ class ImageNode extends SourceNode {
      */
     constructor(
         src: string | HTMLImageElement | ImageBitmap,
-        gl: WebGLRenderingContext,
+        gl: WebGL2RenderingContext,
         renderGraph: RenderGraph,
         currentTime: number,
         preloadTime = 4,

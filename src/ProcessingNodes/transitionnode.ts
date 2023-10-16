@@ -19,7 +19,7 @@ class TransitionNode extends EffectNode {
     /**
      * Initialise an instance of a TransitionNode. You should not instantiate this directly, but use VideoContest.createTransitonNode().
      */
-    constructor(gl: WebGLRenderingContext, renderGraph: RenderGraph, definition: IDefinition) {
+    constructor(gl: WebGL2RenderingContext, renderGraph: RenderGraph, definition: IDefinition) {
         super(gl, renderGraph, definition);
         this._transitions = {};
 

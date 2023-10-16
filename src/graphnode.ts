@@ -9,15 +9,14 @@ class GraphNode {
     _inputNames: string[];
     _renderGraph: RenderGraph;
     _destroyed: boolean;
-    _gl: WebGLRenderingContext;
-    _rendered: boolean;
+    _gl: WebGL2RenderingContext;
     _displayName: string;
     _needsRender: boolean;
     /**
      * Base class from which all processing and source nodes are derrived.
      */
     constructor(
-        gl: WebGLRenderingContext,
+        gl: WebGL2RenderingContext,
         renderGraph: RenderGraph,
         inputNames: string[],
         limitConnections = false
@@ -30,7 +29,6 @@ class GraphNode {
         //Setup WebGL output texture
         this._gl = gl;
         this._renderGraph = renderGraph;
-        this._rendered = false;
         this._displayName = TYPE;
         this._needsRender = false;
     }

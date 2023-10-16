@@ -12,8 +12,8 @@ class EffectNode extends ProcessingNode {
     /**
      * Initialise an instance of an EffectNode. You should not instantiate this directly, but use VideoContest.createEffectNode().
      */
-    constructor(gl: WebGLRenderingContext, renderGraph: RenderGraph, definition: IDefinition) {
-        let placeholderTexture = createElementTexture(gl);
+    constructor(gl: WebGL2RenderingContext, renderGraph: RenderGraph, definition: IDefinition) {
+        const placeholderTexture = createElementTexture(gl);
         gl.texImage2D(
             gl.TEXTURE_2D,
             0,
@@ -42,7 +42,7 @@ class EffectNode extends ProcessingNode {
             this._texture,
             0
         );
-        gl.clearColor(0, 0, 0, 0); // green;
+        gl.clearColor(0, 0, 0, 0);
         gl.clear(gl.COLOR_BUFFER_BIT);
         gl.blendFunc(gl.ONE, gl.ZERO);
 

@@ -55,6 +55,7 @@ export default class VideoContext {
      * @typedef {Object} STATE
      * @property {number} STATE.PLAYING - All sources are active
      * @property {number} STATE.PAUSED - All sources are paused
+     * @property {number} STATE.SEEKING - VideoContext is currently seeking to a new currentTime.
      * @property {number} STATE.STALLED - One or more sources is unable to play
      * @property {number} STATE.ENDED - All sources have finished playing
      * @property {number} STATE.BROKEN - The render graph is in a broken state
@@ -64,21 +65,34 @@ export default class VideoContext {
         PAUSED: 1,
         STALLED: 2,
         ENDED: 3,
-        BROKEN: 4
+        BROKEN: 4,
+        SEEKING: 5
     });
 
     /**
      * Video Context Events
      * @readonly
-     * @typedef {Object} STATE
-     * @property {string} STATE.UPDATE - Called any time a frame is rendered to the screen.
-     * @property {string} STATE.STALLED - happens anytime the playback is stopped due to buffer starvation for playing assets.
-     * @property {string} STATE.ENDED - Called once plackback has finished (i.e ctx.currentTime == ctx.duration).
-     * @property {string} STATE.CONTENT - Called at the start of a time region where there is content playing out of one or more sourceNodes.
-     * @property {number} STATE.NOCONTENT - Called at the start of any time region where the VideoContext is still playing, but there are currently no active playing sources.
+     * @typedef {Object} EVENTS
+     * @property {string} EVENTS.UPDATE - Called any time a frame is rendered to the screen.
+     * @property {string} EVENTS.SEEKING - Called any time the VideoContext starts seeking to a new time.
+     * @property {string} EVENTS.SEEKED - Called any time the VideoContext has finished (frame has rendered) seeking to a new time .
+     * @property {string} EVENTS.PLAY - Called any time the VideoContext has been requested to play.
+     * @property {string} EVENTS.PLAYING - Called any time the VideoContext has started playing (state = PLAYING)
+     * @property {string} EVENTS.PAUSE - Called any time the VideoContext has been requested to pause.
+     * @property {string} EVENTS.PAUSED - Called any time the VideoContext has gone into the PAUSED state.
+     * @property {string} EVENTS.STALLED - happens anytime the playback is stopped due to buffer starvation for playing assets.
+     * @property {string} EVENTS.ENDED - Called once plackback has finished (i.e ctx.currentTime == ctx.duration).
+     * @property {string} EVENTS.CONTENT - Called at the start of a time region where there is content playing out of one or more sourceNodes.
+     * @property {number} EVENTS.NOCONTENT - Called at the start of any time region where the VideoContext is still playing, but there are currently no active playing sources.
      */
     static EVENTS = Object.freeze({
         UPDATE: "update",
+        SEEKING: "seeking",
+        SEEKED: "seeked",
+        PLAY: "play",
+        PLAYING: "playing",
+        PAUSE: "pause",
+        PAUSED: "paused",
         STALLED: "stalled",
         ENDED: "ended",
         CONTENT: "content",
@@ -95,7 +109,7 @@ export default class VideoContext {
 
     _canvas: HTMLCanvasElement;
     _endOnLastSourceEnd: boolean;
-    _gl: WebGLRenderingContext;
+    _gl: WebGL2RenderingContext;
     _useVideoElementCache!: boolean;
     _videoElementCache!: VideoElementCache;
     _id!: string;
@@ -113,6 +127,7 @@ export default class VideoContext {
     _timelineCallbacks!: Array<TimelineCallback>;
     _renderNodeOnDemandOnly: boolean;
     _lastRenderTime: number | undefined;
+    _runAfterNextRender: (() => boolean) | undefined;
     /**
      * Initialise the VideoContext and render to the specific canvas. A 2nd parameter can be passed to the constructor which is a function that get's called if the VideoContext fails to initialise.
      *
@@ -153,13 +168,13 @@ export default class VideoContext {
         this._renderNodeOnDemandOnly = renderNodeOnDemandOnly;
 
         this._gl = canvas.getContext(
-            "experimental-webgl",
+            "webgl2",
             Object.assign(
                 { preserveDrawingBuffer: true }, // can be overriden
                 webglContextAttributes,
-                { alpha: false } // Can't be overriden because it is copied last
+                { alpha: true } // Can't be overriden because it is copied last
             )
-        ) as WebGLRenderingContext;
+        ) as WebGL2RenderingContext;
         if (this._gl === null) {
             console.error("Failed to intialise WebGL.");
             if (initErrorCallback) initErrorCallback();
@@ -186,13 +201,14 @@ export default class VideoContext {
         this._sourceNodes = [];
         this._processingNodes = [];
         this._timeline = [];
-        this._currentTime = 0;
         this._state = VideoContext.STATE.PAUSED;
+        this._currentTime = 0;
         this._playbackRate = 1.0;
         this._volume = 1.0;
         this._sourcesPlaying = undefined;
         this._destinationNode = new DestinationNode(this._gl, this._renderGraph);
         this._lastRenderTime = undefined;
+        this._runAfterNextRender = undefined;
 
         this._callbacks = new Map();
         Object.keys(VideoContext.EVENTS).forEach((name) =>
@@ -347,8 +363,10 @@ export default class VideoContext {
      *
      */
     set currentTime(currentTime) {
-        if (currentTime < this.duration && this._state === VideoContext.STATE.ENDED)
-            this._state = VideoContext.STATE.PAUSED;
+        if (this._state === VideoContext.STATE.PAUSED) {
+            this._state = VideoContext.STATE.SEEKING;
+            this._callCallbacks(VideoContext.EVENTS.SEEKING);
+        }
 
         if (typeof currentTime === "string") {
             currentTime = parseFloat(currentTime);
@@ -361,6 +379,9 @@ export default class VideoContext {
             this._processingNodes[i]._seek(currentTime);
         }
         this._currentTime = currentTime;
+
+        if (currentTime < this.duration && this._state === VideoContext.STATE.ENDED)
+            this._state = VideoContext.STATE.PAUSED;
     }
 
     /**
@@ -505,11 +526,23 @@ export default class VideoContext {
      * ctx.play();
      */
     play() {
-        console.debug("VideoContext - playing");
+        if (this._state === VideoContext.STATE.PLAYING) return false;
+
+        this._callCallbacks(VideoContext.EVENTS.PLAY);
+
         //Initialise the video element cache
         if (this._videoElementCache) this._videoElementCache.init();
         // set the state.
         this._state = VideoContext.STATE.PLAYING;
+
+        this._runAfterNextRender = () => {
+            if (this._state === VideoContext.STATE.PLAYING) {
+                this._callCallbacks(VideoContext.EVENTS.PLAYING);
+                return true;
+            }
+            return false;
+        };
+
         return true;
     }
 
@@ -527,9 +560,25 @@ export default class VideoContext {
      * setTimeout(() => ctx.pause(), 1000); //pause playback after roughly one second.
      */
     pause() {
-        console.debug("VideoContext - pausing");
+        if (this._state === VideoContext.STATE.PAUSED || this._state === VideoContext.STATE.SEEKING)
+            return false;
+
+        this._callCallbacks(VideoContext.EVENTS.PAUSE);
         this._state = VideoContext.STATE.PAUSED;
+
+        this._runAfterNextRender = () => {
+            if (this._state === VideoContext.STATE.PAUSED) {
+                this._callCallbacks(VideoContext.EVENTS.PAUSED);
+                return true;
+            }
+            return false;
+        };
+
         return true;
+    }
+
+    clearCanvas() {
+        this._gl.clear(this._gl.COLOR_BUFFER_BIT);
     }
 
     /**
@@ -818,7 +867,7 @@ export default class VideoContext {
         CustomSourceNode: {
             new (
                 src: any,
-                gl: WebGLRenderingContext,
+                gl: WebGL2RenderingContext,
                 renderGraph: RenderGraph,
                 currentTime: number,
                 ...args: T
@@ -979,16 +1028,28 @@ export default class VideoContext {
         if (
             this._state === VideoContext.STATE.PLAYING ||
             this._state === VideoContext.STATE.STALLED ||
-            this._state === VideoContext.STATE.PAUSED
+            this._state === VideoContext.STATE.PAUSED ||
+            this._state === VideoContext.STATE.SEEKING
         ) {
             this._callCallbacks(VideoContext.EVENTS.UPDATE);
 
-            if (this._state !== VideoContext.STATE.PAUSED) {
+            if (
+                this._state !== VideoContext.STATE.PAUSED &&
+                this._state !== VideoContext.STATE.SEEKING
+            ) {
+                const wasStalled = this._state === VideoContext.STATE.STALLED;
+
                 if (this._isStalled()) {
-                    this._callCallbacks(VideoContext.EVENTS.STALLED);
                     this._state = VideoContext.STATE.STALLED;
+
+                    if (!wasStalled) {
+                        this._callCallbacks(VideoContext.EVENTS.STALLED);
+                    }
                 } else {
                     this._state = VideoContext.STATE.PLAYING;
+                    if (wasStalled) {
+                        this._callCallbacks(VideoContext.EVENTS.PLAYING);
+                    }
                 }
             }
 
@@ -1044,7 +1105,10 @@ export default class VideoContext {
                         sourceNode._pause();
                     }
                 }
-                if (this._state === VideoContext.STATE.PAUSED) {
+                if (
+                    this._state === VideoContext.STATE.PAUSED ||
+                    this._state === VideoContext.STATE.SEEKING
+                ) {
                     sourceNode._pause();
                 }
                 if (this._state === VideoContext.STATE.PLAYING) {
@@ -1105,7 +1169,15 @@ export default class VideoContext {
             const renderNodes =
                 ready && (needsRender || timeChanged) && this._renderNodeOnDemandOnly;
 
+            if (renderNodes) {
+                this._gl.clearColor(0, 0, 0, 0.0);
+                this._gl.clear(this._gl.COLOR_BUFFER_BIT);
+            }
+
             for (let node of sortedNodes) {
+                if (node instanceof DestinationNode) {
+                    continue;
+                }
                 if (renderNodes && (node instanceof SourceNode || node instanceof ProcessingNode)) {
                     node._update(this._currentTime);
                 }
@@ -1113,6 +1185,7 @@ export default class VideoContext {
                     if (
                         !this._renderNodeOnDemandOnly ||
                         this._state === VideoContext.STATE.PLAYING ||
+                        this._state === VideoContext.STATE.SEEKING ||
                         renderNodes
                     ) {
                         (node as ProcessingNode)._update(this._currentTime);
@@ -1123,10 +1196,22 @@ export default class VideoContext {
                     node.needsRender = false;
                 }
             }
+
+            this._destinationNode._render();
             // after nodes are rendered
             // update the previous time
             if (renderNodes) {
                 this._lastRenderTime = this._currentTime;
+            }
+            if (this._state === VideoContext.STATE.SEEKING && ready) {
+                this._state = VideoContext.STATE.PAUSED;
+                this._callCallbacks(VideoContext.EVENTS.SEEKED);
+            }
+            if (this._runAfterNextRender && ready) {
+                if (this._runAfterNextRender()) {
+                    // Remove it if it ran successfully.
+                    this._runAfterNextRender = undefined;
+                }
             }
         }
     }
@@ -1150,8 +1235,8 @@ export default class VideoContext {
         this._sourceNodes = [];
         this._processingNodes = [];
         this._timeline = [];
-        this._currentTime = 0;
         this._state = VideoContext.STATE.PAUSED;
+        this._currentTime = 0;
         this._playbackRate = 1.0;
         this._sourcesPlaying = undefined;
         Object.keys(VideoContext.EVENTS).forEach((name) =>

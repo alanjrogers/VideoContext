@@ -15,7 +15,7 @@ class DestinationNode extends ProcessingNode {
      *
      * You should not instantiate this directly.
      */
-    constructor(gl: WebGLRenderingContext, renderGraph: RenderGraph) {
+    constructor(gl: WebGL2RenderingContext, renderGraph: RenderGraph) {
         let definition = {
             fragmentShader,
             vertexShader,
@@ -33,8 +33,6 @@ class DestinationNode extends ProcessingNode {
         gl.bindFramebuffer(gl.FRAMEBUFFER, null);
         gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
         gl.enable(gl.BLEND);
-        gl.clearColor(0, 0, 0, 0.0); // green;
-        gl.clear(gl.COLOR_BUFFER_BIT);
 
         this.inputs.forEach((node) => {
             super._render();
