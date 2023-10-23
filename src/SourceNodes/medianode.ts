@@ -305,6 +305,10 @@ class MediaNode extends SourceNode {
                 this._unload();
             }
             return false;
+        } else if (this._state === SOURCENODESTATE.sequenced && this._element !== undefined) {
+            this._element.pause();
+            this._unload();
+            return false;
         }
     }
 
