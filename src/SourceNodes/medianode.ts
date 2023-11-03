@@ -268,7 +268,7 @@ class MediaNode extends SourceNode {
 
     _pause() {
         super._pause();
-        if (this._element !== undefined) this._element.pause();
+        if (this._element !== undefined && !this._element.paused) this._element.pause();
     }
 
     _update(currentTime: number, triggerTextureUpdate = true): boolean | void {
