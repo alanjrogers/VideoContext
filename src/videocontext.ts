@@ -1197,10 +1197,10 @@ export default class VideoContext {
                 }
             }
 
-            this._destinationNode._render();
             // after nodes are rendered
             // update the previous time
-            if (renderNodes) {
+            if (renderNodes || this._lastRenderTime === undefined) {
+                this._destinationNode._render();
                 this._lastRenderTime = this._currentTime;
             }
             if (this._state === VideoContext.STATE.SEEKING && ready) {
