@@ -1025,6 +1025,17 @@ export default class VideoContext {
             if (!processingNode.destroyed) return processingNode;
         });
 
+        const ready = !this._isStalled();
+        const needsRender =
+            this._sourceNodes.some((node) => node.needsRender) ||
+            this._processingNodes.some((node) => node.needsRender);
+        const timeChanged = this._lastRenderTime !== this._currentTime;
+        const renderNodes = ready && (needsRender || timeChanged) && this._renderNodeOnDemandOnly;
+
+        if (this._state === VideoContext.STATE.PAUSED && !renderNodes) {
+            return;
+        }
+
         if (
             this._state === VideoContext.STATE.PLAYING ||
             this._state === VideoContext.STATE.STALLED ||
@@ -1162,12 +1173,6 @@ export default class VideoContext {
                     }
                 }
             }
-
-            const ready = !this._isStalled();
-            const needsRender = sortedNodes.some((node) => node.needsRender);
-            const timeChanged = this._lastRenderTime !== this._currentTime;
-            const renderNodes =
-                ready && (needsRender || timeChanged) && this._renderNodeOnDemandOnly;
 
             if (renderNodes) {
                 this._gl.clearColor(0, 0, 0, 0.0);
