@@ -1180,9 +1180,6 @@ export default class VideoContext {
             }
 
             for (let node of sortedNodes) {
-                // if (node instanceof DestinationNode) {
-                //     continue;
-                // }
                 if (renderNodes && (node instanceof SourceNode || node instanceof ProcessingNode)) {
                     node._update(this._currentTime);
                 }
@@ -1205,7 +1202,6 @@ export default class VideoContext {
             // after nodes are rendered
             // update the previous time
             if (renderNodes) {
-                // this._destinationNode._render();
                 this._lastRenderTime = this._currentTime;
             }
             if (this._state === VideoContext.STATE.SEEKING && ready) {
