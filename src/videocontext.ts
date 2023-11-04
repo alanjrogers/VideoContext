@@ -1015,6 +1015,37 @@ export default class VideoContext {
         this._update(dt);
     }
 
+    _updateSourceNodes() {
+        let sourcesPlaying = false;
+
+        for (let i = 0; i < this._sourceNodes.length; i++) {
+            let sourceNode = this._sourceNodes[i];
+
+            if (this._state === VideoContext.STATE.STALLED) {
+                if (sourceNode._isReady() && sourceNode._state === SOURCENODESTATE.playing) {
+                    sourceNode._pause();
+                }
+            }
+            if (
+                this._state === VideoContext.STATE.PAUSED ||
+                this._state === VideoContext.STATE.SEEKING
+            ) {
+                sourceNode._pause();
+            }
+            if (this._state === VideoContext.STATE.PLAYING) {
+                sourceNode._play();
+            }
+            sourceNode._update(this._currentTime);
+            if (
+                sourceNode._state === SOURCENODESTATE.paused ||
+                sourceNode._state === SOURCENODESTATE.playing
+            ) {
+                sourcesPlaying = true;
+            }
+        }
+        return sourcesPlaying;
+    }
+
     _update(dt: number) {
         //Remove any destroyed nodes
         this._sourceNodes = this._sourceNodes.filter((sourceNode) => {
@@ -1024,6 +1055,22 @@ export default class VideoContext {
         this._processingNodes = this._processingNodes.filter((processingNode) => {
             if (!processingNode.destroyed) return processingNode;
         });
+
+        const ready = !this._isStalled();
+        const needsRender =
+            this._sourceNodes.some((node) => node.needsRender) ||
+            this._processingNodes.some((node) => node.needsRender);
+        const timeChanged = this._lastRenderTime !== this._currentTime;
+        const renderNodes = ready && (needsRender || timeChanged) && this._renderNodeOnDemandOnly;
+
+        if (this._state === VideoContext.STATE.PAUSED && !renderNodes) {
+            // Just do this but nothing else
+            const playingNodes = this._sourceNodes.filter(
+                (node) => node._state === SOURCENODESTATE.playing
+            );
+            playingNodes.forEach((node) => node._pause());
+            return;
+        }
 
         if (
             this._state === VideoContext.STATE.PLAYING ||
@@ -1095,33 +1142,7 @@ export default class VideoContext {
                 }
             }
 
-            let sourcesPlaying = false;
-
-            for (let i = 0; i < this._sourceNodes.length; i++) {
-                let sourceNode = this._sourceNodes[i];
-
-                if (this._state === VideoContext.STATE.STALLED) {
-                    if (sourceNode._isReady() && sourceNode._state === SOURCENODESTATE.playing) {
-                        sourceNode._pause();
-                    }
-                }
-                if (
-                    this._state === VideoContext.STATE.PAUSED ||
-                    this._state === VideoContext.STATE.SEEKING
-                ) {
-                    sourceNode._pause();
-                }
-                if (this._state === VideoContext.STATE.PLAYING) {
-                    sourceNode._play();
-                }
-                sourceNode._update(this._currentTime);
-                if (
-                    sourceNode._state === SOURCENODESTATE.paused ||
-                    sourceNode._state === SOURCENODESTATE.playing
-                ) {
-                    sourcesPlaying = true;
-                }
-            }
+            const sourcesPlaying = this._updateSourceNodes();
 
             if (
                 sourcesPlaying !== this._sourcesPlaying &&
@@ -1163,21 +1184,12 @@ export default class VideoContext {
                 }
             }
 
-            const ready = !this._isStalled();
-            const needsRender = sortedNodes.some((node) => node.needsRender);
-            const timeChanged = this._lastRenderTime !== this._currentTime;
-            const renderNodes =
-                ready && (needsRender || timeChanged) && this._renderNodeOnDemandOnly;
-
             if (renderNodes) {
                 this._gl.clearColor(0, 0, 0, 0.0);
                 this._gl.clear(this._gl.COLOR_BUFFER_BIT);
             }
 
             for (let node of sortedNodes) {
-                if (node instanceof DestinationNode) {
-                    continue;
-                }
                 if (renderNodes && (node instanceof SourceNode || node instanceof ProcessingNode)) {
                     node._update(this._currentTime);
                 }
@@ -1197,7 +1209,6 @@ export default class VideoContext {
                 }
             }
 
-            this._destinationNode._render();
             // after nodes are rendered
             // update the previous time
             if (renderNodes) {
