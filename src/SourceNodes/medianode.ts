@@ -260,15 +260,22 @@ class MediaNode extends SourceNode {
         }
         if (
             (this._state === SOURCENODESTATE.sequenced || this._state === SOURCENODESTATE.ended) &&
-            this._element !== undefined
+            this._element !== undefined &&
+            !this._isInPreloadWindow
         ) {
             this._unload();
         }
     }
 
-    _pause() {
-        super._pause();
-        if (this._element !== undefined && !this._element.paused) this._element.pause();
+    get _isInPreloadWindow(): boolean {
+        if (
+            this._startTime - this._currentTime <= this._preloadTime * this._playbackRate &&
+            this._state !== SOURCENODESTATE.waiting &&
+            this._state !== SOURCENODESTATE.ended
+        ) {
+            return true;
+        }
+        return false;
     }
 
     _update(currentTime: number, triggerTextureUpdate = true): boolean | void {
@@ -282,12 +289,9 @@ class MediaNode extends SourceNode {
             }
         }
 
-        if (
-            this._startTime - this._currentTime <= this._preloadTime * this._playbackRate &&
-            this._state !== SOURCENODESTATE.waiting &&
-            this._state !== SOURCENODESTATE.ended
-        )
+        if (this._isInPreloadWindow) {
             this._load();
+        }
 
         if (this._state === SOURCENODESTATE.playing) {
             if (this._playbackRateUpdated) {
@@ -310,7 +314,11 @@ class MediaNode extends SourceNode {
                 this._unload();
             }
             return false;
-        } else if (this._state === SOURCENODESTATE.sequenced && this._element !== undefined) {
+        } else if (
+            this._state === SOURCENODESTATE.sequenced &&
+            this._element !== undefined &&
+            !this._isInPreloadWindow
+        ) {
             this._element.pause();
             this._unload();
             return false;
