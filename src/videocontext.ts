@@ -1063,22 +1063,15 @@ export default class VideoContext {
         const timeChanged = this._lastRenderTime !== this._currentTime;
         const renderNodes = ready && (needsRender || timeChanged) && this._renderNodeOnDemandOnly;
 
-        if (this._state === VideoContext.STATE.PAUSED && !renderNodes) {
-            // Just do this but nothing else
-            const playingNodes = this._sourceNodes.filter(
-                (node) => node._state === SOURCENODESTATE.playing
-            );
-            playingNodes.forEach((node) => node._pause());
-            return;
-        }
-
         if (
             this._state === VideoContext.STATE.PLAYING ||
             this._state === VideoContext.STATE.STALLED ||
             this._state === VideoContext.STATE.PAUSED ||
             this._state === VideoContext.STATE.SEEKING
         ) {
-            this._callCallbacks(VideoContext.EVENTS.UPDATE);
+            if (this._state !== VideoContext.STATE.PAUSED) {
+                this._callCallbacks(VideoContext.EVENTS.UPDATE);
+            }
 
             if (
                 this._state !== VideoContext.STATE.PAUSED &&
