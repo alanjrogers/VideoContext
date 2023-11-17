@@ -316,6 +316,7 @@ class MediaNode extends SourceNode {
             return false;
         } else if (this._state === SOURCENODESTATE.sequenced && this._element !== undefined) {
             this._element.pause();
+            this._element.currentTime = this._sourceOffset;
             if (!this._isInPreloadWindow) {
                 this._unload();
             }
