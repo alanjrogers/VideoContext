@@ -11,7 +11,6 @@ import VideoContext from "./videocontext";
 import GraphNode from "./graphnode";
 import MediaNode from "./SourceNodes/medianode";
 import ProcessingNode from "./ProcessingNodes/processingnode";
-import { HLSTYPE } from "./SourceNodes/hlsnode";
 import { EFFECTTYPE } from "./ProcessingNodes/effectnode";
 import { HLSVIDEOTYPE } from "./SourceNodes/hlsvideonode";
 import { HLSAUDIOTYPE } from "./SourceNodes/hlsaudionode";
