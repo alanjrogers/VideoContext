@@ -3,7 +3,7 @@ import fragmentShader from "./crossfade.frag";
 
 let crossfade = {
     title: "Cross-Fade",
-    description: "A cross-fade effect. Typically used as a transistion.",
+    description: "A cross-fade effect. Typically used as a transition.",
     vertexShader,
     fragmentShader,
     properties: {
