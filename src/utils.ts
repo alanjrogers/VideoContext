@@ -13,6 +13,8 @@ import MediaNode from "./SourceNodes/medianode";
 import ProcessingNode from "./ProcessingNodes/processingnode";
 import { HLSTYPE } from "./SourceNodes/hlsnode";
 import { EFFECTTYPE } from "./ProcessingNodes/effectnode";
+import { HLSVIDEOTYPE } from "./SourceNodes/hlsvideonode";
+import { HLSAUDIOTYPE } from "./SourceNodes/hlsaudionode";
 
 /*
  * Utility function to compile a WebGL Vertex or Fragment shader.
@@ -531,7 +533,7 @@ export function visualiseVideoContextGraph(videoContext: VideoContext, canvas: H
 
     let xStep = w / (maxDepth + 1);
 
-    let nodeHeight = h / videoContext._sourceNodes.length / 3;
+    let nodeHeight = h / videoContext._sourceNodes.length / 2;
     let nodeWidth = nodeHeight * 1.618;
 
     function calculateNodePos(
@@ -598,9 +600,9 @@ export function visualiseVideoContextGraph(videoContext: VideoContext, canvas: H
         let textColor = "#000";
         let text = "";
         if (node.displayName === COMPOSITINGTYPE) {
-            color = "#000000";
+            color = "#fff";
             text = "Compositing";
-            textColor = "#fff";
+            textColor = "#000";
         }
         if (node.displayName === DESTINATIONTYPE) {
             color = "#7D9F35";
@@ -610,16 +612,22 @@ export function visualiseVideoContextGraph(videoContext: VideoContext, canvas: H
             color = "#572A72";
             text = "Video";
         }
-        if (node.displayName === HLSTYPE) {
+        if (node.displayName === HLSVIDEOTYPE) {
             color = "#9473D8";
-            text = "HLS Video";
+            text = "HLSVideo";
         }
-
+        if (node.displayName === HLSAUDIOTYPE) {
+            color = "#9473D8";
+            text = "HLSAudio";
+        }
         if (node.displayName === EFFECTTYPE) {
             color = "#D3D3D3";
             text = "Effect";
         }
-
+        if (node.displayName === TRANSITIONTYPE) {
+            color = "#ADD8E6";
+            text = "Transition";
+        }
         if (node.displayName === CANVASTYPE) {
             color = "#572A72";
             text = "Canvas";
@@ -628,9 +636,11 @@ export function visualiseVideoContextGraph(videoContext: VideoContext, canvas: H
             color = "#572A72";
             text = "Image";
         }
+        console.debug(node.displayName);
         ctx.beginPath();
         ctx.fillStyle = color;
         ctx.fillRect(pos.x, pos.y, nodeWidth, nodeHeight);
+        ctx.strokeRect(pos.x, pos.y, nodeWidth, nodeHeight);
         ctx.fill();
 
         ctx.fillStyle = textColor;
