@@ -635,7 +635,6 @@ export function visualiseVideoContextGraph(videoContext: VideoContext, canvas: H
             color = "#572A72";
             text = "Image";
         }
-        console.debug(node.displayName);
         ctx.beginPath();
         ctx.fillStyle = color;
         ctx.fillRect(pos.x, pos.y, nodeWidth, nodeHeight);
